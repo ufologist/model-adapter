@@ -173,7 +173,7 @@ describe('adapter', function() {
                 }
             },
             d: {
-                validator: function(value) {
+                validator: function(value) { // 验证器执行错误时不阻断
                     console.log(a.b);
                 }
             }
