@@ -21,8 +21,7 @@ export default class ModelAdapter {
         adapt(this, source, adapters);
 
         /**
-         * 适配数据
-         * 
+         * @type {function} 适配数据
          * @param {object} source
          */
         this.$adapt = function(source) {
@@ -30,8 +29,7 @@ export default class ModelAdapter {
         };
 
         /**
-         * 还原数据
-         * 
+         * @type {function} 还原数据
          * @return {object}
          */
         this.$restore = function() {
