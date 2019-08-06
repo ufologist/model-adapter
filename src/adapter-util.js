@@ -57,6 +57,20 @@ export function restore(source, adapters) {
 }
 
 /**
+ * 获取一对一映射属性的适配器
+ * 
+ * @param {*} source 
+ * @return {object} adapters 
+ */
+export function getOneToOneAdapters(source) {
+    var adapters = {};
+    for (var key in source) {
+        adapters[key] = key;
+    }
+    return adapters;
+}
+
+/**
  * 规范化适配器
  * 
  * @param {object | string | function} adapter 

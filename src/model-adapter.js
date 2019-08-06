@@ -1,6 +1,7 @@
 import {
     adapt,
-    restore
+    restore,
+    getOneToOneAdapters
 } from './adapter-util.js';
 
 /**
@@ -16,16 +17,22 @@ export default class ModelAdapter {
      * @param {function} adapters.transformer
      * @param {function} adapters.restorer
      * @param {*} [source] 
+     * @param {boolean} [copy = true] 
      */
-    constructor(adapters, source) {
-        adapt(this, source, adapters);
+    constructor(adapters, source, copy = true) {
+        var _adapters = adapters;
+        var _source = source;
 
         /**
          * @type {function} 适配数据
          * @param {object} source
          */
         this.$adapt = function(source) {
-            adapt(this, source, adapters);
+            if (copy) {
+                _adapters = Object.assign(getOneToOneAdapters(source), _adapters);
+            }
+
+            adapt(this, source, _adapters);
         };
 
         /**
@@ -33,7 +40,9 @@ export default class ModelAdapter {
          * @return {object}
          */
         this.$restore = function() {
-            return restore(this, adapters);
+            return restore(this, _adapters);
         };
+
+        this.$adapt(_source);
     }
 }

@@ -7,14 +7,65 @@ describe('构造函数', function() {
         expect(typeof model.$restore).toBe('function');
     });
 
+    test('用源数据建立一对一的属性适配', function() {
+        var model = new ModelAdapter({
+            ccc: 'c.cc1.ccc'
+        }, {
+            a: 'a',
+            b: 'b',
+            c: {
+                cc1: {
+                    ccc: 'ccc1'
+                },
+                cc2: {
+                    ccc: 'ccc2'
+                }
+            }
+        });
+
+        // 复制的属性
+        expect(model.a).toBe('a');
+        expect(model.b).toBe('b');
+        expect(model.c).toBeDefined();
+        // 明确适配的属性
+        expect(model.ccc).toBe('ccc1');
+        expect(JSON.stringify(model)).toBe('{"a":"a","b":"b","c":{"cc1":{"ccc":"ccc1"},"cc2":{"ccc":"ccc2"}},"ccc":"ccc1"}');
+    });
+
+    test('不 copy 属性', function() {
+        var model = new ModelAdapter({
+            ccc: 'c.cc1.ccc'
+        }, {
+            a: 'a',
+            b: 'b',
+            c: {
+                cc1: {
+                    ccc: 'ccc1'
+                },
+                cc2: {
+                    ccc: 'ccc2'
+                }
+            }
+        }, false);
+
+        expect(JSON.stringify(model)).toBe('{"ccc":"ccc1"}');
+    });
+
     test('没有源数据', function() {
         var model = new ModelAdapter({
             a: 'a',
             b: 'b'
         });
 
-        expect(model.a).toBeUndefined();
-        expect(model.b).toBeUndefined();
+        var json = JSON.stringify(model, function(key, value) {
+            if (typeof value === 'undefined') {
+                return 'undefined';
+            } else {
+                return value;
+            }
+        });
+
+        expect(json).toBe('{"a":"undefined","b":"undefined"}');
     });
 
     test('有源数据', function() {
