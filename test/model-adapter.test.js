@@ -1,7 +1,13 @@
 import ModelAdapter from '../src/model-adapter.js';
 
 describe('构造函数', function() {
-    test('初始化不提供数据', function() {
+    test('没有适配器', function() {
+        var model = new ModelAdapter();
+        expect(typeof model.$adapt).toBe('function');
+        expect(typeof model.$restore).toBe('function');
+    });
+
+    test('没有源数据', function() {
         var model = new ModelAdapter({
             a: 'a',
             b: 'b'
@@ -11,7 +17,7 @@ describe('构造函数', function() {
         expect(model.b).toBeUndefined();
     });
 
-    test('初始化提供数据', function() {
+    test('有源数据', function() {
         var model = new ModelAdapter({
             a: 'a',
             b: 'b'
@@ -26,7 +32,7 @@ describe('构造函数', function() {
 });
 
 describe('$adapt', function() {
-    test('初始化不提供数据', function() {
+    test('没有源数据', function() {
         var model = new ModelAdapter({
             a: 'a',
             b: 'b'
@@ -41,7 +47,7 @@ describe('$adapt', function() {
         expect(model.b).toBe('2');
     });
 
-    test('初始化提供数据', function() {
+    test('有源数据', function() {
         var model = new ModelAdapter({
             a: 'a',
             b: 'b'
@@ -61,7 +67,7 @@ describe('$adapt', function() {
 });
 
 describe('$restore', function() {
-    test('初始化不提供数据', function() {
+    test('没有源数据', function() {
         var model = new ModelAdapter({
             a: 'a',
             b: 'b'
@@ -73,7 +79,7 @@ describe('$restore', function() {
         expect(source.b).toBeUndefined();
     });
 
-    test('初始化提供数据', function() {
+    test('有源数据', function() {
         var model = new ModelAdapter({
             a: 'a',
             b: 'b'
@@ -99,7 +105,8 @@ describe('adapter', function() {
                 return 'd.dd.ddd';
             },
             e: '',             // 默认 path 为属性名
-            f: 'f.ff.fff'
+            f: 'f.ff.fff',
+            g: null
         }, {
             a: 'a',
             b: {
@@ -119,7 +126,8 @@ describe('adapter', function() {
                     ddd: 'ddd'
                 }
             },
-            e: 'e'
+            e: 'e',
+            g: 'g'
         });
 
         expect(model.a).toBe('a');
@@ -128,6 +136,7 @@ describe('adapter', function() {
         expect(model.ddd).toBe('ddd');
         expect(model.e).toBe('e');
         expect(model.f).toBeUndefined();
+        expect(model.g).toBe('g');
     });
 
     test('defaultValue', function() {
@@ -162,16 +171,23 @@ describe('adapter', function() {
                         return false;
                     }
                 }
+            },
+            d: {
+                validator: function(value) {
+                    console.log(a.b);
+                }
             }
         }, {
             a: 1,
             b: 'b',
-            c: 100
+            c: 100,
+            d: 'd'
         });
 
         expect(model.a).toBe(1);
         expect(model.b).toBe('b');
         expect(model.c).toBe(100);
+        expect(model.d).toBe('d');
     });
 
     test('transformer & restorer', function() {
