@@ -33,7 +33,8 @@ function adapt(target, source, adapters) {
   for (var key in adapters) {
     var adapter = normalizeAdapter(adapters[key], key); // 通过 path 获取对象上的属性值
 
-    var value = dotProp.get(source, adapter.path, adapter.defaultValue);
+    var value = dotProp.get(source, adapter.path, adapter.defaultValue); // 先验证数据再转换数据
+    // 当没有 source 时不验证数据
 
     if (typeof source !== 'undefined') {
       validate(value, adapter);
@@ -62,7 +63,7 @@ function restore(source, adapters) {
 
   for (var key in adapters) {
     var adapter = normalizeAdapter(adapters[key], key);
-    var value = source[key];
+    var value = source[key]; // 先还原数据再验证数据
 
     if (adapter.restorer) {
       value = adapter.restorer(value, source);
@@ -79,7 +80,13 @@ function restore(source, adapters) {
  * 
  * @param {object | string | function} adapter 
  * @param {string} key 
+ * 
  * @return {object}
+ * @property {string} path
+ * @property {*} defaultValue
+ * @property {function} validator
+ * @property {function} transformer
+ * @property {function} restorer
  */
 
 function normalizeAdapter(adapter, key) {
@@ -120,7 +127,7 @@ function normalizeAdapter(adapter, key) {
   };
 }
 /**
- * 验证数据(仅提示)
+ * 验证数据(仅输出日志提示)
  * 
  * @param {*} value 
  * @param {object} adapter 
@@ -138,11 +145,11 @@ function validate(value, adapter) {
       // 正则检测
       valid = adapter.validator.test(value);
     } else if (typeof adapter.validator === 'function') {
-      // 校验器
+      // 验证器
       try {
         valid = adapter.validator(value);
       } catch (error) {
-        console.error('校验器执行异常', error);
+        console.error('验证器执行异常', error);
       }
     }
 
@@ -156,19 +163,34 @@ function validate(value, adapter) {
  * 模型适配器
  */
 
-var ModelAdapter = function ModelAdapter(adapters, source) {
+var ModelAdapter =
+/**
+ * 
+ * @param {string | object} [adapters] 
+ * @param {string | function} adapters.path
+ * @param {* | function} adapters.defaultValue
+ * @param {string | RegExp | function} adapters.validator
+ * @param {function} adapters.transformer
+ * @param {function} adapters.restorer
+ * @param {*} [source] 
+ */
+function ModelAdapter(adapters, source) {
   _classCallCheck(this, ModelAdapter);
 
   adapt(this, source, adapters);
   /**
+   * 适配数据
    * 
+   * @param {object} source
    */
 
   this.$adapt = function (source) {
     adapt(this, source, adapters);
   };
   /**
+   * 还原数据
    * 
+   * @return {object}
    */
 
 
