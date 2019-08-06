@@ -14,10 +14,11 @@ export function adapt(target, source, adapters) {
 
         // 通过 path 获取对象上的属性值
         var value = dotProp.get(source, adapter.path, adapter.defaultValue);
+        // 先验证数据再转换数据
+        // 当没有 source 时不验证数据
         if (typeof source !== 'undefined') {
             validate(value, adapter);
         }
-
         // 转换器转换数据
         if (adapter.transformer) {
             value = adapter.transformer(value, source);
@@ -43,6 +44,7 @@ export function restore(source, adapters) {
         var adapter = normalizeAdapter(adapters[key], key);
 
         var value = source[key];
+        // 先还原数据再验证数据
         if (adapter.restorer) {
             value = adapter.restorer(value, source);
         }
@@ -59,7 +61,13 @@ export function restore(source, adapters) {
  * 
  * @param {object | string | function} adapter 
  * @param {string} key 
+ * 
  * @return {object}
+ * @property {string} path
+ * @property {*} defaultValue
+ * @property {function} validator
+ * @property {function} transformer
+ * @property {function} restorer
  */
 function normalizeAdapter(adapter, key) {
     var path;
@@ -101,7 +109,7 @@ function normalizeAdapter(adapter, key) {
 }
 
 /**
- * 验证数据(仅提示)
+ * 验证数据(仅输出日志提示)
  * 
  * @param {*} value 
  * @param {object} adapter 
@@ -114,11 +122,11 @@ function validate(value, adapter) {
             valid = typeof value === adapter.validator;
         } else if (adapter.validator instanceof RegExp) { // 正则检测
             valid = adapter.validator.test(value);
-        } else if (typeof adapter.validator === 'function') { // 校验器
+        } else if (typeof adapter.validator === 'function') { // 验证器
             try {
                 valid = adapter.validator(value);
             } catch (error) {
-                console.error('校验器执行异常', error);
+                console.error('验证器执行异常', error);
             }
         }
 
