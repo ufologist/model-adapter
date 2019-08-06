@@ -1,0 +1,47 @@
+{
+  "name": "model-adapter",
+  "version": "0.0.1",
+  "description": "model adapter",
+  "main": "dist/model-adapter.common.js",
+  "scripts": {
+    "start": "rollup -c",
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ufologist/model-adapter.git"
+  },
+  "keywords": [
+    "model",
+    "adapter"
+  ],
+  "author": "Sun",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ufologist/model-adapter/issues"
+  },
+  "homepage": "https://github.com/ufologist/model-adapter#readme",
+  "devDependencies": {
+    "@babel/core": "^7.5.5",
+    "@babel/preset-env": "^7.5.5",
+    "babel-jest": "^24.8.0",
+    "babel-polyfill": "^6.26.0",
+    "coveralls": "^3.0.5",
+    "jest": "^24.8.0",
+    "rollup": "^1.19.3",
+    "rollup-plugin-babel": "^4.3.3",
+    "rollup-plugin-commonjs": "^10.0.2",
+    "rollup-plugin-node-resolve": "^5.2.0",
+    "rollup-plugin-uglify": "^6.0.2"
+  },
+  "dependencies": {
+    "dot-prop": "^5.1.0"
+  },
+  "jest": {
+    "collectCoverage": true,
+    "coverageReporters": [
+      "text",
+      "lcov"
+    ]
+  }
+}
