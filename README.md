@@ -32,15 +32,72 @@
 舒服一些的处理方式是通过 `object path get` 之类的库事先处理好数据, 形成前端的视图层模型, 尽量避免嵌套数据, 再到视图层中使用, 例如
 
 ```javascript
-// {{aaa}}
+// 在视图中使用: {{aaa}}
 var vm = {
     aaa: _.get('a.aa.aaa')
 };
 ```
 
+## 核心思路
+
+建立一个新的模型, 通过适配器([Adapter](#Adapter))**映射**(`path get` 机制)源数据(模型)上的属性
+
+例如
+* 新模型的 `a` 属性映射源数据模型中的 `a` 属性, 即一对一的映射属性
+
+  `target.a => source.a`
+* 新模型的 `nb` 属性映射源数据模型中的 `b` 属性
+
+  `target.nb => source.b`
+* 新模型的 `ccc` 属性映射源数据模型中嵌套的 `ccc` 属性(通过 `c.cc.ccc` 属性的 `path` 路径)
+
+  `target.ccc => source.c.cc.ccc`
+
+```
+新模型(target)            源数据模型(source)
+{                        {
+    a: 'a',        ─>        a: 1,
+   nb: 'b',        ─>        b: '2',
+  ccc: 'c.cc.ccc'  ─┐        c: {
+                    │            cc: {
+                    └─>              ccc: 'ccc'
+                                 }
+                             }
+}                        }
+```
+
+### 
+
 ## 示例
 
-### 简单
+### 快速开始
+
+```javascript
+import ModelAdapter from 'model-adapter';
+
+// 这里示例由后端接口返回的数据
+var ajaxData = {
+    a: 1,
+    b: '2',
+    c: {
+        cc: {
+            ccc: 'ccc'
+        }
+    }
+};
+
+var model = new ModelAdapter({
+    a: '',          // 映射的字段, 默认为一对一映射, 即该属性映射源数据的对应属性
+    nb: 'b',        // 可以指定源数据上属性的 key
+    ccc: 'c.cc.ccc' // 可以指定访问源数据属性的 path 路径
+}, ajaxData);
+
+console.log(model.a);   // 1
+console.log(model.nb);  // '2'
+console.log(model.ccc); // 'ccc'
+```
+
+### Adapter 配置
 
 ```javascript
 import ModelAdapter from 'model-adapter';
@@ -81,7 +138,13 @@ var source = model.$restore();
 
 ## API 文档
 
+### 构造函数
 
+```javascript
+new ModelAdapter({
+
+});
+```
 
 ## 参考
 
