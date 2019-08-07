@@ -299,11 +299,19 @@ describe('adapter', function() {
                 defaultValue: function() {
                     return '/';
                 }
+            },
+            c: {
+                defaultValue: function() { // 只有当获取的属性值为 undefined 时才会使用 defaultValue
+                    return '--';
+                }
             }
+        }, {
+            c: null
         });
 
         expect(model.a).toBe('-');
         expect(model.b).toBe('/');
+        expect(model.c).toBe(null);
     });
 
     test('validator', function() {
