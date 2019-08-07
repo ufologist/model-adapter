@@ -324,7 +324,7 @@ describe('adapter', function() {
                 }
             },
             d: {
-                validator: function(value) { // 验证器执行错误时不阻断
+                validator: function(value) { // 验证器执行出错时不阻断其他逻辑
                     console.log(a.b);
                 }
             }
