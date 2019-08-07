@@ -1,4 +1,4 @@
-# 如何让 `Vue` 为 `data` 上新增的属性创建 `getter/setter` 监听?
+# 如何让 `Vue` 为 `data` 上新增的属性创建 `getter/setter`
 
 例如一开始 `data` 为
 
