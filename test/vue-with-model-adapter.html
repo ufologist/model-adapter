@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Vue with model-adapter</title>
+</head>
+<body>
+    <div class="js-app">
+        <h1>Vue with model-adapter</h1>
+        <button v-on:click="loadData">loadData</button>
+
+        <h2>source</h2>
+        <pre>{{source}}</pre>
+
+        <h2>model-adapter</h2>
+        <p v-if="foo.aaa">aaa: {{foo.aaa}}</p>
+        <p v-if="foo.b">b: <input type="text" v-model="foo.b"></p>
+        <div>foo: <pre>{{foo}}</pre></div>
+
+        <h2>restore</h2>
+        <pre>{{restored}}</pre>
+    </div>
+    <script src="//cdn.bootcss.com/vue/2.6.10/vue.min.js"></script>
+    <script src="//raw.githack.com/ufologist/model-adapter/master/dist/model-adapter.js"></script>
+    <script>
+    var root = new Vue({
+        el: '.js-app',
+        data: {
+            source: {
+                a: {
+                    aa: {
+                        aaa: 'aaa'
+                    }
+                },
+                b: 'b'
+            },
+
+            // 因为一开始新建模型时没有源数据, 因此无法根据源数据推导出所有属性,
+            // 会造成 data 只会挂有显示声明的属性, 会造成后面适配数据时,
+            // 那些新增的属性无法享受到 reactive 机制,
+            // 因此建议关闭 copy 机制显示声明所有需要用到的属性,
+            // 或者在后面 assign 复制出一个新对象
+            foo: new ModelAdapter({
+                aaa: 'a.aa.aaa'
+            })
+        },
+        computed: {
+            restored: function() {
+                return this.foo.$restore();
+            }
+        },
+        methods: {
+            loadData: function() {
+                setTimeout(() => {
+                    this.foo.$adapt(this.source);
+
+                    // XXX 在视图中直接使用 {{foo.$restore()}}, 会造成 $restore 方法无限循环调用
+                    // 因此请使用 computed 属性来调用 $restore 方法
+                    this.foo = Object.assign({}, this.foo);
+                }, 1000);
+            }
+        }
+    });
+    </script>
+</body>
