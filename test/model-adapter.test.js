@@ -327,18 +327,23 @@ describe('adapter', function() {
                 validator: function(value) { // 验证器执行出错时不阻断其他逻辑
                     console.log(a.b);
                 }
+            },
+            e: {
+                validator: 1 // 无效的验证器
             }
         }, {
             a: 1,
             b: 'b',
             c: 100,
-            d: 'd'
+            d: 'd',
+            e: true
         });
 
         expect(model.a).toBe(1);
         expect(model.b).toBe('b');
         expect(model.c).toBe(100);
         expect(model.d).toBe('d');
+        expect(model.e).toBe(true);
     });
 
     test('transformer & restorer', function() {
