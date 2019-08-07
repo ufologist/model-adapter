@@ -1,5 +1,16 @@
 import ModelAdapter from '../src/model-adapter.js';
 
+/**
+ * JSON.stringify replacer 支持输出 undefined 属性
+ */
+function stringifyReplacer(key, value) {
+    if (typeof value === 'undefined') {
+        return 'undefined';
+    } else {
+        return value;
+    }
+}
+
 describe('构造函数', function() {
     test('没有适配器', function() {
         var model = new ModelAdapter();
@@ -7,7 +18,7 @@ describe('构造函数', function() {
         expect(typeof model.$restore).toBe('function');
     });
 
-    test('用源数据建立一对一的属性适配', function() {
+    test('一对一的属性适配', function() {
         var model = new ModelAdapter({
             ccc: 'c.cc1.ccc'
         }, {
@@ -57,14 +68,7 @@ describe('构造函数', function() {
             b: 'b'
         });
 
-        var json = JSON.stringify(model, function(key, value) {
-            if (typeof value === 'undefined') {
-                return 'undefined';
-            } else {
-                return value;
-            }
-        });
-
+        var json = JSON.stringify(model, stringifyReplacer);
         expect(json).toBe('{"a":"undefined","b":"undefined"}');
     });
 
@@ -100,8 +104,7 @@ describe('$adapt', function() {
 
     test('有源数据', function() {
         var model = new ModelAdapter({
-            a: 'a',
-            b: 'b'
+            a: 'a'
         }, {
             a: 1,
             b: '2'
@@ -115,9 +118,75 @@ describe('$adapt', function() {
         expect(model.a).toBe(11);
         expect(model.b).toBe('22');
     });
+
+    test('重复执行', function() {
+        var model = new ModelAdapter({
+            a: 'a'
+        }, {
+            a: 1,
+            b: '2'
+        });
+
+        model.$adapt({
+            a: 11,
+            b: '22'
+        });
+        model.$adapt({
+            a: 111,
+            b: '222'
+        });
+
+        expect(model.a).toBe(111);
+        expect(model.b).toBe('222');
+    });
 });
 
 describe('$restore', function() {
+    test('一对一的属性适配', function() {
+        var model = new ModelAdapter({
+            ccc: 'c.cc1.ccc'
+        }, {
+            a: 'a',
+            b: 'b',
+            c: {
+                cc1: {
+                    ccc: 'ccc1'
+                },
+                cc2: {
+                    ccc: 'ccc2'
+                }
+            }
+        });
+
+        var source = model.$restore();
+
+        // 复制的属性
+        expect(source.a).toBe('a');
+        expect(source.b).toBe('b');
+        expect(source.c).toBeDefined();
+        expect(JSON.stringify(source)).toBe('{"a":"a","b":"b","c":{"cc1":{"ccc":"ccc1"},"cc2":{"ccc":"ccc2"}}}');
+    });
+
+    test('不 copy 属性', function() {
+        var model = new ModelAdapter({
+            ccc: 'c.cc1.ccc'
+        }, {
+            a: 'a',
+            b: 'b',
+            c: {
+                cc1: {
+                    ccc: 'ccc1'
+                },
+                cc2: {
+                    ccc: 'ccc2'
+                }
+            }
+        }, false);
+
+        var source = model.$restore();
+        expect(JSON.stringify(source)).toBe('{"c":{"cc1":{"ccc":"ccc1"}}}');
+    });
+
     test('没有源数据', function() {
         var model = new ModelAdapter({
             a: 'a',
@@ -125,9 +194,8 @@ describe('$restore', function() {
         });
 
         var source = model.$restore();
-
-        expect(source.a).toBeUndefined();
-        expect(source.b).toBeUndefined();
+        var json = JSON.stringify(source, stringifyReplacer);
+        expect(json).toBe('{"a":"undefined","b":"undefined"}');
     });
 
     test('有源数据', function() {
@@ -140,6 +208,38 @@ describe('$restore', function() {
         });
 
         var source = model.$restore();
+
+        expect(source.a).toBe(1);
+        expect(source.b).toBe('2');
+    });
+
+    test('修改数据', function() {
+        var model = new ModelAdapter({
+            a: 'a'
+        }, {
+            a: 1,
+            b: '2'
+        });
+
+        // 修改数据
+        model.a = 11;
+        model.b = '22';
+
+        var source = model.$restore();
+        expect(source.a).toBe(11);
+        expect(source.b).toBe('22');
+    });
+
+    test('重复执行', function() {
+        var model = new ModelAdapter({
+            a: 'a'
+        }, {
+            a: 1,
+            b: '2'
+        });
+
+        var source = model.$restore();
+        source = model.$restore();
 
         expect(source.a).toBe(1);
         expect(source.b).toBe('2');
