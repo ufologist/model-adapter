@@ -16,6 +16,9 @@
 
 PS: 这个 `b` 属性只是示例, 可能有 N 多未知的属性需要添加, 所以使用 `$set` 方法的场景不适用.
 
+* [重新问题的 demo](https://raw.githack.com/ufologist/model-adapter/master/test/vue-dynamic-add-property-problem.html)
+* [解决问题的 demo](https://raw.githack.com/ufologist/model-adapter/master/test/vue-dynamic-add-property-solution.html)
+
 ## 解决办法: 复制出一个新的对象再赋值回去
 
 注意如果只是 `var foo = this.foo` 来复制引用不行的
