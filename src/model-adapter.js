@@ -32,6 +32,10 @@ export default class ModelAdapter {
         var _adapters = adapters;
         var _source = source;
 
+        // 如果将 $adapt 和 $restore 声明在原型上, 需要将 adapters 之类的属性挂在实例上,
+        // 这样原型上的方法才能访问到这些属性, 但这样会增加与 source 上属性冲突的可能性,
+        // 因此在构造函数中为每一个实例挂上 $adapt 和 $restore 方法,
+        // 这样就可以将 adapters 之类的属性作为私有属性来访问了
         /**
          * @type {function} 适配数据
          * @param {object} source
