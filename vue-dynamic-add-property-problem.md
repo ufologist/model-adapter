@@ -14,7 +14,11 @@
 
 那么如何才能让 `foo.b` 获得 `getter/setter` 以享受到 Vue 的 [reactive 机制](https://cn.vuejs.org/v2/guide/reactivity.html)呢?
 
-PS: 这个 `b` 属性只是示例, 可能有 N 多未知的属性需要添加, 所以使用 `$set` 方法的场景不适用.
+PS: 这个 `b` 属性只是示例, 可能有 N 多未知的属性需要添加, 所以使用 `$set` 方法的场景不适用. 还要注意一点: 使用 `$set` 操作已经存在的属性时, 只会修改属性的值, 不会创建 `getter/setter`, [文档中有说明](https://vuejs.org/v2/api/#Vue-set), 但平时没仔细研究可能就掉坑里了.
+
+> Adds a property to a reactive object, ensuring the new property is also reactive, so triggers view updates. 
+>
+> **This must be used to add new properties to reactive objects**, as Vue cannot detect normal property additions (e.g. this.myObject.newProperty = 'hi').
 
 ## 解决办法: 复制出一个新的对象再赋值回去
 
