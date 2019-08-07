@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>如何让 Vue 为 data 上新增的属性创建 getter/setter 监听?</title>
+</head>
+<body>
+    <h1>Q: 如何让 Vue 为 data 上新增的属性创建 getter/setter 监听?</h1>
+    <h1>A: 复制出一个新对象</h1>
+    <div class="js-app">
+        <p>a: {{foo.a}}</p>
+        <p>b: <input v-if="foo.b" type="text" v-model="foo.b"></p>
+        <p>foo: {{foo}}</p>
+        <button v-on:click="addProperty">foo.b = 'b'</button> <span>&lt;-复制出新对象</span>
+    </div>
+    <script src="//cdn.bootcss.com/vue/2.6.10/vue.min.js"></script>
+    <script>
+    var root = new Vue({
+        el: '.js-app',
+        data: {
+            foo: {
+                a: 'a'
+            }
+        },
+        methods: {
+            addProperty: function() {
+                this.foo = Object.assign({}, this.foo, {
+                    b: 'b'
+                });
+
+                this._showPropertyDescriptor();
+            },
+            _showPropertyDescriptor: function() {
+                var info = {};
+                for (var key in this.foo) {
+                    var descriptor = Object.getOwnPropertyDescriptor(this.foo, key);
+                    info[key] = Object.assign({}, descriptor, {
+                        get: typeof descriptor.get === 'function' ? 'function' : undefined,
+                        set: typeof descriptor.set === 'function' ? 'function' : undefined
+                    });
+                }
+                alert(JSON.stringify(info, null, 4));
+            }
+        }
+    });
+    </script>
+</body>

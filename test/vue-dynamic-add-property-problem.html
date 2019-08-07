@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>如何让 Vue 为 data 上新增的属性创建 getter/setter 监听?</title>
+</head>
+<body>
+    <h1>如何让 Vue 为 data 上新增的属性创建 getter/setter 监听?</h1>
+    <div class="js-app">
+        <p>a: {{foo.a}}</p>
+        <p>b: <input v-if="foo.b" type="text" v-model="foo.b"></p>
+        <p>foo: {{foo}}</p>
+        <button v-on:click="addProperty">foo.b = 'b'</button> <span>&lt;-点击按钮后视图没有更新</span>
+    </div>
+    <script src="https://cdn.bootcss.com/vue/2.6.10/vue.min.js"></script>
+    <script>
+    var root = new Vue({
+        el: '.js-app',
+        data: {
+            foo: {
+                a: 'a'
+            }
+        },
+        methods: {
+            addProperty: function() {
+                this.foo.b = 'b';
+                alert(JSON.stringify(this.foo, null, 4));
+            }
+        }
+    });
+    </script>
+</body>
