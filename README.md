@@ -40,7 +40,7 @@ var vm = {
 
 ## 核心思路
 
-建立一个新的模型, 通过适配器([Adapter](#Adapter))**映射**(`path get` 机制)源数据(模型)上的属性
+建立一个新的模型, 通过适配器(Adapter)**映射**(`path get` 机制)源数据(模型)上的属性
 
 例如
 * 新模型的 `a` 属性映射源数据模型中的 `a` 属性, 即一对一的映射属性
@@ -66,8 +66,6 @@ var vm = {
 }                        }
 ```
 
-### 
-
 ## 示例
 
 ### 快速开始
@@ -86,23 +84,53 @@ var ajaxData = {
     }
 };
 
-var model = new ModelAdapter({
-    a: '',          // 映射的字段, 默认为一对一映射, 即该属性映射源数据的对应属性
-    nb: 'b',        // 可以指定源数据上属性的 key
-    ccc: 'c.cc.ccc' // 可以指定访问源数据属性的 path 路径
+var model = new ModelAdapter({ // a, b 属性默认一对一映射
+    ccc: 'c.cc.ccc'            // 嵌套属性映射到源数据属性的 path 路径
 }, ajaxData);
 
 console.log(model.a);   // 1
-console.log(model.nb);  // '2'
+console.log(model.b);   // '2'
 console.log(model.ccc); // 'ccc'
 ```
 
-### Adapter 配置
+[配合 `Vue` 来使用](https://raw.githack.com/ufologist/model-adapter/master/test/vue-with-model-adapter.html)
+
+### 变形和还原
 
 ```javascript
 import ModelAdapter from 'model-adapter';
 
-// 这里示例由后端接口返回的数据
+var ajaxData = {
+    date: 1565001521464
+};
+
+var model = new ModelAdapter({
+    date: {
+        transformer: function(value, source) {
+            return new Date(value).toISOString();
+        },
+        restorer: function(value, source) {
+            return new Date(value).getTime();
+        }
+    }
+}, ajaxData);
+
+var source = model.$restore();
+
+console.log(model.date);  // 2019-08-05T10:38:41.464Z
+console.log(source.date); // 1565001521464
+```
+
+### 先声明模型再适配数据
+
+```javascript
+import ModelAdapter from 'model-adapter';
+
+// 声明模型
+var model = new ModelAdapter({
+    ccc: 'c.cc.ccc'
+});
+
 var ajaxData = {
     a: 1,
     b: '2',
@@ -112,17 +140,43 @@ var ajaxData = {
         }
     }
 };
-
-var model = new ModelAdapter({
-    a: 'a',
-    b: 'b',
-    ccc: 'c.cc.ccc'
-}, ajaxData);
+// 适配数据
+model.$adapt(ajaxData);
 
 console.log(model.a);
 console.log(model.b);
 console.log(model.ccc);
 ```
+
+### 声明模型类
+
+```javascript
+class User extends ModelAdapter {
+    constructor(source) {
+        super({
+            name: 'name',
+            avatarImgUrl: 'extData.avatar.imgUrl'
+        }, source);
+    }
+}
+
+var ajaxData = {
+    name: 'hello',
+    extData: {
+        avatar: {
+            imgUrl: 'https://image-placeholder.com/images/actual-size/57x57.png'
+        }
+    }
+};
+
+var user = new User(ajaxData);
+
+console.log(user);
+console.log(user.name);
+console.log(user.avatarImgUrl);
+```
+
+### Adapter 配置
 
 ### 随时适配数据
 
