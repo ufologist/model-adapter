@@ -11,7 +11,7 @@ function stringifyReplacer(key, value) {
     }
 }
 
-describe('构造函数', function() {
+describe('constructor', function() {
     test('没有适配器', function() {
         var model = new ModelAdapter();
         expect(typeof model.$adapt).toBe('function');
@@ -143,9 +143,7 @@ describe('$adapt', function() {
 
 describe('$restore', function() {
     test('一对一的属性适配', function() {
-        var model = new ModelAdapter({
-            ccc: 'c.cc1.ccc'
-        }, {
+        var source = {
             a: 'a',
             b: 'b',
             c: {
@@ -156,15 +154,19 @@ describe('$restore', function() {
                     ccc: 'ccc2'
                 }
             }
-        });
+        }
 
-        var source = model.$restore();
+        var model = new ModelAdapter({
+            ccc: 'c.cc1.ccc'
+        }, source);
+
+        var restored = model.$restore();
 
         // 复制的属性
-        expect(source.a).toBe('a');
-        expect(source.b).toBe('b');
-        expect(source.c).toBeDefined();
-        expect(JSON.stringify(source)).toBe('{"a":"a","b":"b","c":{"cc1":{"ccc":"ccc1"},"cc2":{"ccc":"ccc2"}}}');
+        expect(restored.a).toBe(source.a);
+        expect(restored.b).toBe(source.b);
+        expect(restored.c).toBe(source.c);
+        expect(JSON.stringify(restored)).toBe(JSON.stringify(source));
     });
 
     test('不 copy 属性', function() {
@@ -183,8 +185,9 @@ describe('$restore', function() {
             }
         }, false);
 
-        var source = model.$restore();
-        expect(JSON.stringify(source)).toBe('{"c":{"cc1":{"ccc":"ccc1"}}}');
+        var restored = model.$restore();
+
+        expect(JSON.stringify(restored)).toBe('{"c":{"cc1":{"ccc":"ccc1"}}}');
     });
 
     test('没有源数据', function() {
@@ -193,56 +196,66 @@ describe('$restore', function() {
             b: 'b'
         });
 
-        var source = model.$restore();
-        var json = JSON.stringify(source, stringifyReplacer);
+        var restored = model.$restore();
+        var json = JSON.stringify(restored, stringifyReplacer);
+
         expect(json).toBe('{"a":"undefined","b":"undefined"}');
     });
 
     test('有源数据', function() {
+        var source = {
+            a: 1,
+            b: '2'
+        };
+
         var model = new ModelAdapter({
             a: 'a',
             b: 'b'
-        }, {
-            a: 1,
-            b: '2'
-        });
+        }, source);
 
-        var source = model.$restore();
+        var restored = model.$restore();
 
-        expect(source.a).toBe(1);
-        expect(source.b).toBe('2');
+        expect(restored.a).toBe(source.a);
+        expect(restored.b).toBe(source.b);
     });
 
     test('修改数据', function() {
-        var model = new ModelAdapter({
-            a: 'a'
-        }, {
+        var source = {
             a: 1,
             b: '2'
-        });
+        };
+
+        var model = new ModelAdapter({
+            a: 'a'
+        }, source);
 
         // 修改数据
         model.a = 11;
         model.b = '22';
 
-        var source = model.$restore();
-        expect(source.a).toBe(11);
-        expect(source.b).toBe('22');
-    });
-
-    test('重复执行', function() {
-        var model = new ModelAdapter({
-            a: 'a'
-        }, {
-            a: 1,
-            b: '2'
-        });
-
-        var source = model.$restore();
-        source = model.$restore();
+        var restored = model.$restore();
 
         expect(source.a).toBe(1);
         expect(source.b).toBe('2');
+        expect(restored.a).toBe(11);
+        expect(restored.b).toBe('22');
+    });
+
+    test('重复执行', function() {
+        var source = {
+            a: 1,
+            b: '2'
+        };
+
+        var model = new ModelAdapter({
+            a: 'a'
+        }, source);
+
+        var restored = model.$restore();
+        restored = model.$restore();
+
+        expect(restored.a).toBe(source.a);
+        expect(restored.b).toBe(source.b);
     });
 });
 
@@ -370,7 +383,42 @@ describe('adapter', function() {
             }
         }, source);
 
+        var restored = model.$restore();
+
         expect(model.a).toBe('2019-08-05T10:38:41.464Z');
-        expect(model.$restore().a).toBe(source.a);
+        expect(restored.a).toBe(source.a);
+    });
+
+    test('array', function() {
+        var source = {
+            a: {
+                aa: {
+                    aaa: [{
+                        a1: 'item-a1',
+                        a2: 'item-a2',
+                    }]
+                }
+            }
+        };
+
+        var model = new ModelAdapter({
+            aaa: {
+                path: 'a.aa.aaa',
+                transformer: function(value) { // 在 transformer 中适配数组元素的模型
+                    return value.map(function(item) {
+                        return new ModelAdapter({
+                            itemA1: 'a1',
+                            itemA2: 'a2'
+                        }, item);
+                    });
+                }
+            }
+        }, source);
+
+        var restored = model.$restore();
+
+        expect(model.aaa[0].itemA1).toBe(source.a.aa.aaa[0].a1);
+        expect(JSON.stringify(model)).toBe('{"a":{"aa":{"aaa":[{"a1":"item-a1","a2":"item-a2","itemA1":"item-a1","itemA2":"item-a2"}]}},"aaa":[{"a1":"item-a1","a2":"item-a2","itemA1":"item-a1","itemA2":"item-a2"}]}');
+        expect(JSON.stringify(restored)).toBe(JSON.stringify(source));
     });
 });
