@@ -54,9 +54,10 @@
         methods: {
             loadData: function() {
                 setTimeout(() => {
+                    // 建议在 service 层封装模型适配的逻辑
                     this.foo.$adapt(this.source);
 
-                    // XXX 在视图中直接使用 {{foo.$restore()}}, 会造成 $restore 方法无限循环调用
+                    // XXX 在视图中直接使用 {{foo.$restore()}}, 会造成 $restore 方法被无限循环调用
                     // 因此请使用 computed 属性来调用 $restore 方法
                     this.foo = Object.assign({}, this.foo);
                 }, 1000);

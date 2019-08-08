@@ -26,9 +26,8 @@
         },
         methods: {
             addProperty: function() {
-                this.foo = Object.assign({}, this.foo, {
-                    b: 'b'
-                });
+                this.foo.b = 'b';
+                this.foo = Object.assign({}, this.foo);
 
                 this._showPropertyDescriptor();
             },
