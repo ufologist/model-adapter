@@ -5,12 +5,12 @@ import dotProp from 'dot-prop';
  * 
  * @param {object} target 
  * @param {object} source 
- * @param {object} adapters
+ * @param {object} propertyAdapter
  * @return {object}
  */
-export function adapt(target, source, adapters) {
-    for (var key in adapters) {
-        var adapter = normalizeAdapter(adapters[key], key);
+export function adapt(target, source, propertyAdapter) {
+    for (var key in propertyAdapter) {
+        var adapter = normalizeAdapter(propertyAdapter[key], key);
 
         // 通过 path 获取对象上的属性值
         var value = dotProp.get(source, adapter.path);
@@ -44,14 +44,14 @@ export function adapt(target, source, adapters) {
  * 还原数据
  * 
  * @param {object} model 
- * @param {object} adapters 
+ * @param {object} propertyAdapter 
  * @return {object}
  */
-export function restore(model, adapters) {
+export function restore(model, propertyAdapter) {
     var source = {};
 
-    for (var key in adapters) {
-        var adapter = normalizeAdapter(adapters[key], key);
+    for (var key in propertyAdapter) {
+        var adapter = normalizeAdapter(propertyAdapter[key], key);
 
         var value = model[key];
         // 先还原数据再验证数据
@@ -67,17 +67,17 @@ export function restore(model, adapters) {
 }
 
 /**
- * 获取一对一映射属性的适配器
+ * 获取一对一映射的属性适配器
  * 
  * @param {*} source 
- * @return {object} adapters 
+ * @return {object} propertyAdapter 
  */
-export function getOneToOneAdapters(source) {
-    var adapters = {};
+export function getOneToOnePropertyAdapter(source) {
+    var propertyAdapter = {};
     for (var key in source) {
-        adapters[key] = key;
+        propertyAdapter[key] = key;
     }
-    return adapters;
+    return propertyAdapter;
 }
 
 /**

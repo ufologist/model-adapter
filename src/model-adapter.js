@@ -1,7 +1,7 @@
 import {
     adapt,
     restore,
-    getOneToOneAdapters
+    getOneToOnePropertyAdapter
 } from './adapter-util.js';
 
 /**
@@ -10,7 +10,7 @@ import {
 export default class ModelAdapter {
     /**
      * 
-     * @param {object} [adapters] 属性适配器: 结构为 `{name1: <adapter>, name2: <adapter>, ...}`
+     * @param {object} [propertyAdapter] 属性适配器: 结构为 `{name1: <adapter>, name2: <adapter>, ...}`
      * - `属性名`为新模型的属性名
      * - `属性值`用于配置适配器, 支持以下几种方式
      *   - 当设置为 `{string}` 或者 `{function}` 类型时作为 `path` 来使用
@@ -28,24 +28,24 @@ export default class ModelAdapter {
      * 但如果需要做到前后端数据模型彻底解耦, 建议关闭 copy 功能,
      * 一个一个属性的适配, 明确声明前端模型有哪些属性.
      */
-    constructor(adapters, source, copy = true) {
-        var _adapters = adapters;
+    constructor(propertyAdapter, source, copy = true) {
+        var _propertyAdapter = propertyAdapter;
         var _source = source;
 
-        // 如果将 $adapt 和 $restore 声明在原型上, 需要将 adapters 之类的属性挂在实例上,
+        // 如果将 $adapt 和 $restore 声明在原型上, 需要将 source 之类的属性挂在实例上,
         // 这样原型上的方法才能访问到这些属性, 但这样会增加与 source 上属性冲突的可能性,
         // 因此在构造函数中为每一个实例挂上 $adapt 和 $restore 方法,
-        // 这样就可以将 adapters 之类的属性作为私有属性来访问了
+        // 这样就可以将 source 之类的属性作为私有属性来访问了
         /**
          * @type {function} 适配数据
          * @param {object} source
          */
         this.$adapt = function(source) {
             if (copy) {
-                _adapters = Object.assign(getOneToOneAdapters(source), _adapters);
+                _propertyAdapter = Object.assign(getOneToOnePropertyAdapter(source), _propertyAdapter);
             }
 
-            adapt(this, source, _adapters);
+            adapt(this, source, _propertyAdapter);
         };
 
         /**
@@ -53,7 +53,7 @@ export default class ModelAdapter {
          * @return {object}
          */
         this.$restore = function() {
-            return restore(this, _adapters);
+            return restore(this, _propertyAdapter);
         };
 
         this.$adapt(_source);
