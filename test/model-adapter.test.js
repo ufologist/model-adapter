@@ -301,7 +301,7 @@ describe('adapter', function() {
                 }
             },
             c: {
-                defaultValue: function() { // 只有当获取的属性值为 undefined 时才会使用 defaultValue
+                defaultValue: function() {
                     return '--';
                 }
             }
@@ -311,7 +311,7 @@ describe('adapter', function() {
 
         expect(model.a).toBe('-');
         expect(model.b).toBe('/');
-        expect(model.c).toBe(null);
+        expect(model.c).toBe('--');
     });
 
     test('validator', function() {

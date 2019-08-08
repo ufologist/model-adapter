@@ -13,7 +13,17 @@ export function adapt(target, source, adapters) {
         var adapter = normalizeAdapter(adapters[key], key);
 
         // 通过 path 获取对象上的属性值
-        var value = dotProp.get(source, adapter.path, adapter.defaultValue);
+        var value = dotProp.get(source, adapter.path);
+
+        // 当获取的属性值为 undefined 或者 null 时使用 defaultValue
+        // 因为大部分情况下, 数据模型中的属性多是 null 值, 而非 undefined
+        //
+        // path get 库的处理机制是: 只有当获取的属性值为 undefined 时才会使用 defaultValue
+        // 因此这里我们需要自己来处理, 不使用 path get 库的逻辑
+        if ((typeof value === 'undefined' || value === null) && typeof adapter.defaultValue !== 'undefined') {
+            value = adapter.defaultValue;
+        }
+
         // 先验证数据再转换数据
         // 当没有 source 时不验证数据
         if (typeof source !== 'undefined') {
