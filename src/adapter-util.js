@@ -146,16 +146,18 @@ function validate(value, adapter) {
             valid = typeof value === adapter.validator;
         } else if (adapter.validator instanceof RegExp) { // 正则检测
             valid = adapter.validator.test(value);
-        } else if (typeof adapter.validator === 'function') { // 验证器
+        } else if (typeof adapter.validator === 'function') { // 验证器方法
             try {
                 valid = adapter.validator(value);
             } catch (error) {
-                console.error('验证器执行异常', error);
+                console.error('validator error', error);
             }
+        } else {
+            console.warn('unknown type of validator', adapter.validator, adapter);
         }
 
         if (!valid) {
-            console.warn('验证数据不通过', adapter.path, value, adapter.validator, adapter);
+            console.warn('validator result is invalid', adapter.path, value, adapter.validator, adapter);
         }
     }
 }
