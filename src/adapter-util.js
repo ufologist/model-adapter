@@ -43,27 +43,27 @@ export function adapt(target, source, adapters) {
 /**
  * 还原数据
  * 
- * @param {object} source 
+ * @param {object} model 
  * @param {object} adapters 
  * @return {object}
  */
-export function restore(source, adapters) {
-    var target = {};
+export function restore(model, adapters) {
+    var source = {};
 
     for (var key in adapters) {
         var adapter = normalizeAdapter(adapters[key], key);
 
-        var value = source[key];
+        var value = model[key];
         // 先还原数据再验证数据
         if (adapter.restorer) {
-            value = adapter.restorer(value, source);
+            value = adapter.restorer(value, model);
         }
         validate(value, adapter);
 
-        dotProp.set(target, adapter.path, value);
+        dotProp.set(source, adapter.path, value);
     }
 
-    return target;
+    return source;
 }
 
 /**

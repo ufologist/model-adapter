@@ -377,7 +377,7 @@ describe('adapter', function() {
                 transformer: function(value, source) {
                     return new Date(value).toISOString();
                 },
-                restorer: function(value, source) {
+                restorer: function(value, model) {
                     return new Date(value).getTime();
                 }
             }
