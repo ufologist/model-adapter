@@ -15,8 +15,8 @@
         <pre>{{source}}</pre>
 
         <h2>model-adapter</h2>
-        <p v-if="foo.aaa">aaa: {{foo.aaa}}</p>
-        <p v-if="foo.b">b: <input type="text" v-model="foo.b"></p>
+        <p v-if="foo.a">a: {{foo.a}}</p>
+        <p v-if="foo.bbb">bbb: <input type="text" v-model="foo.bbb"></p>
         <div>foo: <pre>{{foo}}</pre></div>
 
         <h2>restore</h2>
@@ -29,12 +29,13 @@
         el: '.js-app',
         data: {
             source: {
-                a: {
-                    aa: {
-                        aaa: 'aaa'
+                a: 'a',
+                b: {
+                    bb: {
+                        bbb: 'bbb'
                     }
                 },
-                b: 'b'
+                c: 'c'
             },
 
             // 因为一开始新建模型时没有源数据, 因此无法根据源数据推导出所有属性,
@@ -43,7 +44,7 @@
             // 因此建议关闭 copy 机制显示声明所有需要用到的属性,
             // 或者在后面 assign 复制出一个新对象
             foo: new ModelAdapter({
-                aaa: 'a.aa.aaa'
+                bbb: 'b.bb.bbb'
             })
         },
         computed: {
