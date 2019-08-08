@@ -45,22 +45,22 @@ var vm = {
 例如
 * 新模型的 `a` 属性映射源数据模型中的 `a` 属性, 即一对一的映射属性
 
-  `target.a => source.a`
+  `target.a = source.a`
 * 新模型的 `nb` 属性映射源数据模型中的 `b` 属性
 
-  `target.nb => source.b`
+  `target.nb = source.b`
 * 新模型的 `ccc` 属性映射源数据模型中嵌套的 `ccc` 属性(通过 `c.cc.ccc` 属性的 `path` 路径)
 
-  `target.ccc => source.c.cc.ccc`
+  `target.ccc = source.c.cc.ccc`
 
 ```
 新模型(target)            源数据模型(source)
 {                        {
-    a: 'a',        ─>        a: 1,
-   nb: 'b',        ─>        b: '2',
-  ccc: 'c.cc.ccc'  ─┐        c: {
-                    │            cc: {
-                    └─>              ccc: 'ccc'
+    a: 'a',        <─        a: 1,
+   nb: 'b',        <─        b: '2',
+  ccc: 'c.cc.ccc'  <─┐       c: {
+                     │           cc: {
+                     └─              ccc: 'ccc'
                                  }
                              }
 }                        }
@@ -263,17 +263,60 @@ console.log(user.countryName); // 'China'
 
 ### 与其他框架集成
 
-* [配合 `Vue` 来使用](https://raw.githack.com/ufologist/model-adapter/master/test/vue-with-model-adapter.html)
-* [React]
-* [Angular]
+* [Vue](https://raw.githack.com/ufologist/model-adapter/master/test/vue-with-model-adapter.html)
+* [React](https://raw.githack.com/ufologist/model-adapter/master/test/react-with-model-adapter.html)
 
 ## API 概览
 
 * 构建函数
 
   ```javascript
-  var model = new ModelAdapter(propertyAdapter, source);
+  var model = new ModelAdapter(propertyAdapter, source, copy);
   ```
+
+  注意: 开启和关闭 `copy` 参数的区别
+  * 开启 `copy`: 适配数据时会自动将 `source` 上面的所有属性一对一映射一遍(为这些属性创建 `propertyAdapter`), 再追加 `propertyAdapter` 参数显式声明的属性
+
+    例如
+    ```javascript
+    var model = new ModelAdapter({
+        countryName: 'extData.country.name'
+    }, {
+        name: 'Sun',
+        age: 18,
+        extData: {
+            country: {
+                name: 'China'
+            }
+        }
+    });
+
+    // copy 来的属性
+    console.log(model.name);
+    console.log(model.age);
+    console.log(model.extData);
+    // 显式声明的属性
+    console.log(model.countryName);
+    ```
+  * 关闭 `copy`: 适配数据时只会有 `propertyAdapter` 显式声明的属性
+
+    例如
+    ```javascript
+    var model = new ModelAdapter({
+        countryName: 'extData.country.name'
+    }, {
+        name: 'Sun',
+        age: 18,
+        extData: {
+            country: {
+                name: 'China'
+            }
+        }
+    }, false);
+
+    // 只有显式声明的属性
+    console.log(model.countryName);
+    ```
 * 属性适配器
 
   结构为
