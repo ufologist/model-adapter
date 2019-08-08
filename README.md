@@ -68,34 +68,56 @@ var vm = {
 
 ## 示例
 
-### 快速开始
+### 嵌套数据: 打平数据结构, 映射 `path` 来访问
 
 ```javascript
 import ModelAdapter from 'model-adapter';
 
 // 这里示例由后端接口返回的数据
 var ajaxData = {
-    a: 1,
-    b: '2',
-    c: {
-        cc: {
-            ccc: 'ccc'
+    name: 'Sun',
+    age: 18,
+    extData: {
+        country: {
+            name: 'China'
         }
     }
 };
 
-var model = new ModelAdapter({ // a, b 属性默认一对一映射
-    ccc: 'c.cc.ccc'            // 嵌套属性映射到源数据属性的 path 路径
+var model = new ModelAdapter({          // name, age 属性默认一对一映射
+    countryName: 'extData.country.name' // 嵌套属性映射到源数据属性的 path 路径
 }, ajaxData);
 
-console.log(model.a);   // 1
-console.log(model.b);   // '2'
-console.log(model.ccc); // 'ccc'
+console.log(model.name);        // 'Sun'
+console.log(model.age);         // 18
+console.log(model.countryName); // 'China'
 ```
 
-[配合 `Vue` 来使用](https://raw.githack.com/ufologist/model-adapter/master/test/vue-with-model-adapter.html)
+### 空数据: 设置默认值
 
-### 变形和还原
+```javascript
+import ModelAdapter from 'model-adapter';
+
+var ajaxData = {
+    name: null,
+    age: 18
+};
+
+var model = new ModelAdapter({
+    name: { // null 的属性值
+        defaultValue: 'Guest'
+    },
+    sex: { // undefined 的属性值
+        defaultValue: 'man'
+    }
+}, ajaxData);
+
+console.log(model.name); // 'Guest'
+console.log(model.age);  // 18
+console.log(model.sex);  // 'man'
+```
+
+### 格式化数据: 变形和还原
 
 ```javascript
 import ModelAdapter from 'model-adapter';
@@ -106,19 +128,79 @@ var ajaxData = {
 
 var model = new ModelAdapter({
     date: {
-        transformer: function(value, source) {
+        transformer: function(value, source) { // 变形器负责格式化数据
             return new Date(value).toISOString();
         },
-        restorer: function(value, source) {
+        restorer: function(value, model) {     // 还原器负责还原回去
             return new Date(value).getTime();
         }
     }
 }, ajaxData);
 
-var source = model.$restore();
+var restored = model.$restore();
 
-console.log(model.date);  // 2019-08-05T10:38:41.464Z
-console.log(source.date); // 1565001521464
+console.log(model.date);    // '2019-08-05T10:38:41.464Z'
+console.log(restored.date); // 1565001521464
+```
+
+### 数组: 在 `transformer` 中适配数组元素的模型
+
+```javascript
+import ModelAdapter from 'model-adapter';
+
+var ajaxData = {
+    users: [{
+        name: 'Sun',
+        age: 18,
+        extData: {
+            country: {
+                name: 'China'
+            }
+        }
+    }, {
+        name: 'Shine',
+        age: 19,
+        extData: {
+            country: {
+                name: 'China'
+            }
+        }
+    }]
+};
+
+var model = new ModelAdapter({
+    users: {
+        transformer: function(value) {
+            return value.map(function(item) {
+                return new ModelAdapter({
+                    countryName: 'extData.country.name'
+                }, item);
+            });
+        }
+    }
+}, ajaxData);
+
+console.log(model.users[0].name);        // 'Sun'
+console.log(model.users[0].age);         // 18
+console.log(model.users[0].countryName); // 'China'
+```
+
+### 验证数据: 验证器(仅输出日志提示)
+
+```javascript
+import ModelAdapter from 'model-adapter';
+
+var ajaxData = {
+    age: '18'
+};
+
+var model = new ModelAdapter({
+    age: {
+        validator: 'number'
+    }
+}, ajaxData);
+
+console.log(model.age); // '18'
 ```
 
 ### 先声明模型再适配数据
@@ -128,77 +210,93 @@ import ModelAdapter from 'model-adapter';
 
 // 声明模型
 var model = new ModelAdapter({
-    ccc: 'c.cc.ccc'
+    countryName: 'extData.country.name'
 });
 
 var ajaxData = {
-    a: 1,
-    b: '2',
-    c: {
-        cc: {
-            ccc: 'ccc'
+    name: 'Sun',
+    age: 18,
+    extData: {
+        country: {
+            name: 'China'
         }
     }
 };
 // 适配数据
 model.$adapt(ajaxData);
 
-console.log(model.a);
-console.log(model.b);
-console.log(model.ccc);
+console.log(model.name);        // 'Sun'
+console.log(model.age);         // 18
+console.log(model.countryName); // 'China'
 ```
 
-### 声明模型类
+### 声明模型类(推荐关闭 `copy` 机制)
 
 ```javascript
+import ModelAdapter from 'model-adapter';
+
 class User extends ModelAdapter {
     constructor(source) {
         super({
             name: 'name',
-            avatarImgUrl: 'extData.avatar.imgUrl'
-        }, source);
+            countryName: 'extData.country.name'
+        }, source, false);
     }
 }
 
 var ajaxData = {
-    name: 'hello',
+    name: 'Sun',
+    age: 18,
     extData: {
-        avatar: {
-            imgUrl: 'https://image-placeholder.com/images/actual-size/57x57.png'
+        country: {
+            name: 'China'
         }
     }
 };
 
 var user = new User(ajaxData);
 
-console.log(user);
-console.log(user.name);
-console.log(user.avatarImgUrl);
+console.log(user);             // <User>
+console.log(user.name);        // 'Sun'
+console.log(user.countryName); // 'China'
 ```
 
-### Adapter 配置
+### 与其他框架集成
 
-### 随时适配数据
+* [配合 `Vue` 来使用](https://raw.githack.com/ufologist/model-adapter/master/test/vue-with-model-adapter.html)
+* [React]
+* [Angular]
 
-```javascript
-model.$adapt(source);
-```
+## API 概览
 
-### 还原数据
+* 构建函数
 
-```javascript
-var source = model.$restore();
-```
+  ```javascript
+  var model = new ModelAdapter(propertyAdapter, source);
+  ```
+* 属性适配器
 
-## API 文档
+  结构为
+  ```javascript
+  {
+      name1: <adapter>,
+      name2: <adapter>,
+      ...
+  }
+  ```
 
-### 构造函数
+  * **属性名**为新模型的属性名
+  * **属性值**用于配置适配器, 支持的配置方式详见 [API文档](https://doc.esdoc.org/github.com/ufologist/model-adapter/class/src/model-adapter.js~ModelAdapter.html)
+* 适配数据
 
-```javascript
-new ModelAdapter({
+  ```javascript
+  model.$adapt(source);
+  ```
+* 还原数据
 
-});
-```
+  ```javascript
+  var source = model.$restore();
+  ```
 
 ## 参考
 
