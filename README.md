@@ -264,6 +264,7 @@ console.log(user.countryName); // 'China'
 ### 与其他框架集成
 
 * [Vue](https://raw.githack.com/ufologist/model-adapter/master/test/vue-with-model-adapter.html)
+  * [如何让 Vue 为 data 上新增的属性创建 getter/setter](https://github.com/ufologist/model-adapter/blob/master/vue-dynamic-add-property-problem.md)
 * [React](https://raw.githack.com/ufologist/model-adapter/master/test/react-with-model-adapter.html)
 
 ## API 概览
