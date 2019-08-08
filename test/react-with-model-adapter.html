@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title>React with model-adapter</title>
+</head>
+<body>
+    <div class="js-app"></div>
+    <script src="//cdn.bootcss.com/react/16.8.5/umd/react.development.js"></script>
+    <script src="//cdn.bootcss.com/react-dom/16.8.6/umd/react-dom.development.js"></script>
+    <script src="//cdn.bootcss.com/babel-standalone/6.15.0/babel.min.js"></script>
+
+    <script src="//raw.githack.com/ufologist/model-adapter/master/dist/model-adapter.js"></script>
+    <script type="text/babel">
+    class Hello extends React.Component {
+        constructor(props) {
+            super(props);
+
+            this.source = {
+                a: 'a',
+                b: {
+                    bb: {
+                        bbb: 'bbb'
+                    }
+                },
+                c: 'c'
+            };
+
+            this.state = new ModelAdapter({
+                bbb: 'b.bb.bbb'
+            });
+        }
+
+        render() {
+            return (
+                <div>
+                    <h1>React with model-adapter</h1>
+                    <button onClick={this.loadData.bind(this)}>loadData</button>
+
+                    <h2>source</h2>
+                    <pre>{JSON.stringify(this.source, null, 2)}</pre>
+
+                    <h2>model-adapter</h2>
+                    {this.state.a && <p>a: {this.state.a}</p>}
+                    {this.state.bbb && <p>bbb: <input type="text" value={this.state.bbb} onChange={this.onChange.bind(this)} /></p>}
+                    <div>state: <pre>{JSON.stringify(this.state, null, 2)}</pre></div>
+
+                    <h2>restore</h2>
+                    <pre>{JSON.stringify(this.state.$restore(), null, 2)}</pre>
+                </div>
+            );
+        }
+
+        loadData() {
+            setTimeout(() => {
+                // 建议在 service 层封装模型适配的逻辑
+                this.state.$adapt(this.source);
+                this.setState(this.state);
+            }, 1000);
+        }
+
+        onChange(event) {
+            this.setState({
+                bbb: event.target.value
+            });
+        }
+    }
+    ReactDOM.render(
+        <Hello />,
+        document.querySelector('.js-app')
+    );
+    </script>
+</body>
+</html>
