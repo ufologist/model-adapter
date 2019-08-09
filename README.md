@@ -269,68 +269,71 @@ console.log(user.countryName); // 'China'
 
 ## API 概览
 
-* 构建函数
+* 构造函数
 
   ```javascript
   var model = new ModelAdapter(propertyAdapter, source, copy);
   ```
 
-  注意: 开启和关闭 `copy` 参数的区别
-  * 开启 `copy`: 适配数据时会自动将 `source` 上面的所有属性一对一映射一遍(为这些属性创建 `propertyAdapter`), 再追加 `propertyAdapter` 参数显式声明的属性
+  * `propertyAdapter`: 属性适配器
 
-    例如
+    结构为
     ```javascript
-    var model = new ModelAdapter({
-        countryName: 'extData.country.name'
-    }, {
-        name: 'Sun',
-        age: 18,
-        extData: {
-            country: {
-                name: 'China'
-            }
-        }
-    });
-
-    // copy 来的属性
-    console.log(model.name);
-    console.log(model.age);
-    console.log(model.extData);
-    // 显式声明的属性
-    console.log(model.countryName);
+    {
+        name1: <adapter>,
+        name2: <adapter>,
+        ...
+    }
     ```
-  * 关闭 `copy`: 适配数据时只会有 `propertyAdapter` 显式声明的属性
 
-    例如
-    ```javascript
-    var model = new ModelAdapter({
-        countryName: 'extData.country.name'
-    }, {
-        name: 'Sun',
-        age: 18,
-        extData: {
-            country: {
-                name: 'China'
-            }
-        }
-    }, false);
+    * **属性名**为新模型的属性名
+    * **属性值**用于配置适配器, 支持的配置方式详见 [API文档](https://doc.esdoc.org/github.com/ufologist/  model-adapter/class/src/model-adapter.js~ModelAdapter.html)
+  * `source`: 源数据
+  * `copy`: 是否自动一对一映射源数据上的属性
+  
+    注意: 开启和关闭 `copy` 参数的区别
+    * 开启 `copy`: 适配数据时会自动将 `source` 上面的所有属性一对一映射一遍(为这些属性创建 `propertyAdapter`), 再追加 `propertyAdapter` 参数显式声明的属性
 
-    // 只有显式声明的属性
-    console.log(model.countryName);
-    ```
-* 属性适配器
+      例如
+      ```javascript
+      var model = new ModelAdapter({
+          countryName: 'extData.country.name'
+      }, {
+          name: 'Sun',
+          age: 18,
+          extData: {
+              country: {
+                  name: 'China'
+              }
+          }
+      });
 
-  结构为
-  ```javascript
-  {
-      name1: <adapter>,
-      name2: <adapter>,
-      ...
-  }
-  ```
+      // copy 来的属性
+      console.log(model.name);
+      console.log(model.age);
+      console.log(model.extData);
+      // 显式声明的属性
+      console.log(model.countryName);
+      ```
+    * 关闭 `copy`: 适配数据时只会有 `propertyAdapter` 显式声明的属性
 
-  * **属性名**为新模型的属性名
-  * **属性值**用于配置适配器, 支持的配置方式详见 [API文档](https://doc.esdoc.org/github.com/ufologist/model-adapter/class/src/model-adapter.js~ModelAdapter.html)
+      例如
+      ```javascript
+      var model = new ModelAdapter({
+          countryName: 'extData.country.name'
+      }, {
+          name: 'Sun',
+          age: 18,
+          extData: {
+              country: {
+                  name: 'China'
+              }
+          }
+      }, false);
+
+      // 只有显式声明的属性
+      console.log(model.countryName);
+      ```
 * 适配数据
 
   ```javascript
