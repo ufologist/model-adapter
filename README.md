@@ -19,6 +19,11 @@
 
 模型适配器: 后端数据与前端数据的桥梁
 
+专注于解决前端那些老生常谈的问题(没碰到过算你赢), 如果你遇到过以下场景, 请试用一下
+- 嵌套数据: 哎呀\~报错了; 哦\~访问 xxx 为空了啊
+- 空数据: 咦\~怎么没有头像; 哦\~需要一个默认头像啊
+- 格式化数据: 诶\~要显示年月日; 但返回的数据是时间戳啊
+
 ## 初衷
 
 在 `Vue` 或者其他视图层框架中, 如果直接使用如下插值表达式, 当嵌套对象(通常是后端返回的数据)中的某一层级为空时就会报错 `TypeError: Cannot read property 'xxx' of undefined`, **造成整个组件都无法渲染**.
@@ -266,6 +271,23 @@ console.log(user.countryName); // 'China'
 * [Vue](https://raw.githack.com/ufologist/model-adapter/master/test/vue-with-model-adapter.html)
   * [如何让 Vue 为 data 上新增的属性创建 getter/setter](https://github.com/ufologist/model-adapter/blob/master/vue-dynamic-add-property-problem.md)
 * [React](https://raw.githack.com/ufologist/model-adapter/master/test/react-with-model-adapter.html)
+
+### 建议的接入方式
+
+* 方式一: 在前端服务层中接入
+* 方式二: 在后端(`Node`)中间层中接入
+
+例如
+```javascript
+// service/user.js
+export function getUser() {
+    return axios('/user').then(function(response) {
+        return new ModelAdapter({
+            countryName: 'extData.country.name'
+        }, response.data);
+    });
+}
+```
 
 ## API 概览
 
