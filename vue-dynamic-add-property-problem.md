@@ -68,6 +68,9 @@ this.foo = Object.assign({}, this.foo, {
 ```javascript
 this.foo.b = 'b';
 this.foo = Object.assign({}, this.foo);
+// 可以使用 Object Spread 语法更加简洁
+// https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Operators/Spread_syntax#%E6%9E%84%E9%80%A0%E5%AD%97%E9%9D%A2%E9%87%8F%E5%AF%B9%E8%B1%A1%E6%97%B6%E4%BD%BF%E7%94%A8%E5%B1%95%E5%BC%80%E8%AF%AD%E6%B3%95
+// this.foo = {...this.foo};
 ```
 
 ## 答案
