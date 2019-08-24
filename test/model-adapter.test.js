@@ -32,7 +32,7 @@ describe('constructor', function() {
                     ccc: 'source-ccc'
                 }
             },
-            d: 'source-d',
+            d: '',
             e: null
         }, {
             a: 'default-a',
@@ -42,10 +42,11 @@ describe('constructor', function() {
                     ccc: 'default-ccc',
                     ccc1: 'default-ccc1'
                 }
-            }
+            },
+            d: 'default-d'
         });
 
-        expect(JSON.stringify(model)).toBe('{"a":"default-a","b":"source-b","c":{"cc":{"ccc":"source-ccc","ccc1":"default-ccc1"}},"d":"source-d","e":null}')
+        expect(JSON.stringify(model)).toBe('{"a":"default-a","b":"source-b","c":{"cc":{"ccc":"source-ccc","ccc1":"default-ccc1"}},"d":"","e":null}')
     });
 
     test('有 source 和 propertyAdapter', function() {
@@ -97,6 +98,87 @@ describe('constructor', function() {
         });
 
         expect(JSON.stringify(model)).toBe('{"a":"default-a","b":"source-b","c":{"cc":{"ccc":"2019-08-05T10:38:41.464Z","ccc1":"default-ccc1"}},"d":"source-d","e":null}')
+    });
+
+    test('整个数组', function() {
+        var source = {
+            users: [{
+                name: 'Sun',
+                age: 18,
+                extData: {
+                    country: {
+                        name: 'China'
+                    }
+                }
+            }, {
+                age: 19,
+                extData: null
+            }, {
+                name: '',
+                age: 19,
+                extData: {
+                    country: null
+                }
+            }]
+        };
+
+        var model = new ModelAdapter(source, null, {
+            'users': {
+                transformer: function(value, model) {
+                    return value.map(function(item) {
+                        return new ModelAdapter(item, {
+                            name: 'Guest',
+                            extData: {
+                                country: {
+                                    name: 'China'
+                                }
+                            }
+                        });
+                    });
+                }
+            }
+        });
+
+        expect(JSON.stringify(model)).toBe('{"users":[{"name":"Sun","age":18,"extData":{"country":{"name":"China"}}},{"age":19,"extData":{"country":{"name":"China"}},"name":"Guest"},{"name":"","age":19,"extData":{"country":{"name":"China"}}}]}');
+        expect(JSON.stringify(model.$restore())).toBe('{"users":[{"name":"Sun","age":18,"extData":{"country":{"name":"China"}}},{"age":19,"extData":null},{"name":"","age":19,"extData":{"country":null}}]}');
+    });
+
+    test('数组中的属性', function() {
+        var source = {
+            a: {
+                aa: {
+                    aaa: [{
+                        a1: 1565001521464,
+                        a2: 1565001521400,
+                    }]
+                }
+            }
+        };
+
+        var model = new ModelAdapter(source, null, {
+            'a.aa.aaa': {
+                transformer: function(value, model) {
+                    return value.map(function(item) {
+                        // TODO 对于引用类型(复杂类型)的值(例如 object/array)保存到寄存器的是引用,
+                        // 如果直接在 transformer 中修改了原来的值,
+                        // 那么 $restore 就还原不回去了,
+                        // 因此要么在保存到寄存器时 deep clone, 要么在 transformer 中 deep clone
+
+                        // item.a1 = new Date(item.a1).toISOString();
+                        // item.a2 = new Date(item.a2).toISOString();
+                        // return item;
+                        return {
+                            ...item,
+                            a1: new Date(item.a1).toISOString(),
+                            a2: new Date(item.a2).toISOString()
+                        };
+                    });
+                }
+            }
+        });
+
+        expect(JSON.stringify(model)).toBe('{"a":{"aa":{"aaa":[{"a1":"2019-08-05T10:38:41.464Z","a2":"2019-08-05T10:38:41.400Z"}]}}}');
+        expect(JSON.stringify(model.$restore())).toBe('{"a":{"aa":{"aaa":[{"a1":1565001521464,"a2":1565001521400}]}}}');
     });
 });
 
