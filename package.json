@@ -1,6 +1,6 @@
 {
   "name": "model-adapter",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "model adapter",
   "main": "dist/model-adapter.common.js",
   "module": "dist/model-adapter.esm.js",
