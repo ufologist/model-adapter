@@ -1,40 +1,96 @@
 import dotProp from 'dot-prop';
+import defaultsDeep from './fav-prop.defaults-deep.js';
+
+/**
+ * 获取 path 分组
+ * 
+ * @param {string} path 
+ * @return {Array<string>}
+ * @see https://github.com/sindresorhus/dot-prop
+ */
+function getPathSegments(path) {
+    const pathArray = path.split('.');
+    const parts = [];
+
+    for (let i = 0; i < pathArray.length; i++) {
+        let p = pathArray[i];
+
+        while (p[p.length - 1] === '\\' && pathArray[i + 1] !== undefined) {
+            p = p.slice(0, -1) + '.';
+            p += pathArray[++i];
+        }
+
+        parts.push(p);
+    }
+
+    return parts;
+}
+
+/**
+ * 根据 path 获取父级对象
+ * 
+ * 例如 path 为: a.b.c
+ * 我们需要先拿到 a.b 这个目标对象
+ * 
+ * @param {object} target 
+ * @param {string} propertyPath
+ * @return {object}
+ */
+function getParentObject(target, propertyPath) {
+    var parentObject = null;
+
+    var pathArray = getPathSegments(propertyPath);
+    if (pathArray.length === 1) {
+        parentObject = target;
+    } else {
+        var parentPropertyPath = pathArray.slice(0, pathArray.length - 1).join('.');
+        parentObject = dotProp.get(target, parentPropertyPath);
+        if (typeof parentObject === 'undefined' || parentObject === null) {
+            parentObject = {};
+            dotProp.set(target, parentPropertyPath, parentObject);
+        }
+    }
+
+    return parentObject;
+}
 
 /**
  * 适配数据
  * 
  * @param {object} target 
- * @param {object} source 
  * @param {object} propertyAdapter
+ * @param {object} register
  * @return {object}
  */
-export function adapt(target, source, propertyAdapter) {
-    for (var key in propertyAdapter) {
-        var adapter = normalizeAdapter(propertyAdapter[key], key);
+export function adapt(target, propertyAdapter, register) {
+    for (var propertyPath in propertyAdapter) {
+        var adapter = propertyAdapter[propertyPath] || {};
 
-        // 通过 path 获取对象上的属性值
-        var value = dotProp.get(source, adapter.path);
-
-        // 当获取的属性值为 undefined 或者 null 时使用 defaultValue
-        // 因为大部分情况下, 数据模型中的属性多是 null 值, 而非 undefined
-        //
-        // path get 库的处理机制是: 只有当获取的属性值为 undefined 时才会使用 defaultValue
-        // 因此这里我们需要自己来处理, 不使用 path get 库的逻辑
-        if ((typeof value === 'undefined' || value === null) && typeof adapter.defaultValue !== 'undefined') {
-            value = adapter.defaultValue;
-        }
-
-        // 先验证数据再转换数据
-        // 当没有 source 时不验证数据
-        if (typeof source !== 'undefined') {
-            validate(value, adapter);
-        }
-        // 转换器转换数据
+        // 通过 getter/setter 实现转换器转换数据
         if (adapter.transformer) {
-            value = adapter.transformer(value, source);
-        }
+            var pathArray = getPathSegments(propertyPath);
+            var propertyName = pathArray[pathArray.length - 1];
+            var definePropertyTarget = getParentObject(target, propertyPath);
 
-        target[key] = value;
+            var propertyValue = dotProp.get(target, propertyPath);
+            dotProp.set(register, propertyPath, propertyValue);
+
+            // 将原属性改写为 getter/setter, 属性值保存到寄存器上
+            Object.defineProperty(definePropertyTarget, propertyName, {
+                get: function() {
+                    // TODO 如果要适配的属性本身是一个 getter/setter 呢?
+                    // 从寄存器上获取属性值
+                    var original = dotProp.get(register, propertyPath);
+                    return adapter.transformer(original, target);
+                },
+                set: function(value) {
+                    // 将属性值保存到寄存器上
+                    dotProp.set(register, propertyPath, value);
+                },
+                configurable: true,
+                enumerable: true
+            });
+        }
     }
 
     return target;
@@ -43,121 +99,33 @@ export function adapt(target, source, propertyAdapter) {
 /**
  * 还原数据
  * 
- * @param {object} model 
+ * @param {object} target 
  * @param {object} propertyAdapter 
+ * @param {object} register 
  * @return {object}
  */
-export function restore(model, propertyAdapter) {
-    var source = {};
+export function restore(target, propertyAdapter, register) {
+    var source = defaultsDeep({}, target);
 
-    for (var key in propertyAdapter) {
-        var adapter = normalizeAdapter(propertyAdapter[key], key);
+    for (var propertyPath in propertyAdapter) {
+        var adapter = propertyAdapter[propertyPath] || {};
 
-        var value = model[key];
-        // 先还原数据再验证数据
-        if (adapter.restorer) {
-            value = adapter.restorer(value, model);
+        // 去除 getter/setter 转换器, 还原为原始值
+        if (adapter.transformer) {
+            var pathArray = getPathSegments(propertyPath);
+            var propertyName = pathArray[pathArray.length - 1];
+            // 原始值在寄存器上
+            var propertyValue = dotProp.get(register, propertyPath);
+            var definePropertyTarget = getParentObject(source, propertyPath);
+
+            Object.defineProperty(definePropertyTarget, propertyName, {
+                value: propertyValue,
+                configurable: true,
+                enumerable: true,
+                writable: true
+            });
         }
-        validate(value, adapter);
-
-        dotProp.set(source, adapter.path, value);
     }
 
     return source;
-}
-
-/**
- * 获取一对一映射的属性适配器
- * 
- * @param {*} source 
- * @return {object} propertyAdapter 
- */
-export function getOneToOnePropertyAdapter(source) {
-    var propertyAdapter = {};
-    for (var key in source) {
-        propertyAdapter[key] = key;
-    }
-    return propertyAdapter;
-}
-
-/**
- * 规范化适配器
- * 
- * @param {object | string | function} adapter 
- * @param {string} key 
- * 
- * @return {object}
- * @property {string} path
- * @property {*} defaultValue
- * @property {function} validator
- * @property {function} transformer
- * @property {function} restorer
- */
-function normalizeAdapter(adapter, key) {
-    var path;
-    var defaultValue;
-
-    var validator;
-
-    var transformer;
-    var restorer;
-
-    if (typeof adapter === 'string' || typeof adapter === 'function') {
-        path = adapter;
-    } else if (adapter && typeof adapter === 'object') {
-        path = adapter.path;
-        defaultValue = adapter.defaultValue;
-        validator = adapter.validator;
-        transformer = adapter.transformer;
-        restorer = adapter.restorer;
-    }
-
-    if (!path) { // 默认的 path 为属性名
-        path = key;
-    } else if (typeof path === 'function') {
-        // TODO 传入 source, key?
-        path = path();
-    }
-
-    if (typeof defaultValue === 'function') {
-        defaultValue = defaultValue();
-    }
-
-    return {
-        path: path,
-        defaultValue: defaultValue,
-        validator: validator,
-        transformer: transformer,
-        restorer: restorer
-    };
-}
-
-/**
- * 验证数据(仅输出日志提示)
- * 
- * @param {*} value 
- * @param {object} adapter 
- */
-function validate(value, adapter) {
-    if (adapter.validator) {
-        var valid = false;
-
-        if (typeof adapter.validator === 'string') { // 数据类型
-            valid = typeof value === adapter.validator;
-        } else if (adapter.validator instanceof RegExp) { // 正则检测
-            valid = adapter.validator.test(value);
-        } else if (typeof adapter.validator === 'function') { // 验证器方法
-            try {
-                valid = adapter.validator(value);
-            } catch (error) {
-                console.error('validator error', error);
-            }
-        } else {
-            console.warn('unknown type of validator', adapter.validator, adapter);
-        }
-
-        if (!valid) {
-            console.warn('validator result is invalid', adapter.path, value, adapter.validator, adapter);
-        }
-    }
 }

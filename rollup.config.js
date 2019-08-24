@@ -19,9 +19,7 @@ export default [{
         name: 'ModelAdapter'
     },
     plugins: [
-        nodeResolve({
-            browser: true
-        }),
+        nodeResolve(),
         commonjs(),
         babelPlugin,
         uglify()
