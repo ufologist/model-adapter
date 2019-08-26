@@ -16,50 +16,44 @@
 
         <h2>model-adapter</h2>
         <p v-if="foo.a">a: {{foo.a}}</p>
-        <p v-if="foo.bbb">bbb: <input type="text" v-model="foo.bbb"></p>
+        <p v-if="foo.b.bb.bbb">b.bb.bbb: <input type="text" v-model="foo.b.bb.bbb"></p>
         <div>foo: <pre>{{foo}}</pre></div>
 
         <h2>restore</h2>
-        <pre>{{restored}}</pre>
+        <pre>{{foo.$restore()}}</pre>
     </div>
     <script src="//cdn.bootcss.com/vue/2.6.10/vue.min.js"></script>
-    <script src="//raw.githack.com/ufologist/model-adapter/master/dist/model-adapter.js"></script>
+    <script src="../dist/model-adapter.js"></script>
     <script>
     var root = new Vue({
         el: '.js-app',
         data: {
-            source: {
-                a: 'a',
-                b: {
-                    bb: {
-                        bbb: 'bbb'
-                    }
-                },
-                c: 'c'
-            },
+            source: null,
 
             // 因为一开始新建模型时没有源数据, 因此无法根据源数据推导出所有属性,
             // 会造成 data 只会挂有显示声明的属性, 会造成后面适配数据时,
             // 那些新增的属性无法享受到 reactive 机制,
-            // 因此建议关闭 copy 机制显示声明所有需要用到的属性,
-            // 或者在后面 assign 复制出一个新对象
-            foo: new ModelAdapter({
-                bbb: 'b.bb.bbb'
+            // 因此在后面 assign 复制出一个新对象
+            foo: new ModelAdapter(null, {
+                b: {
+                    bb: {
+                        bbb: 'default-bbb'
+                    }
+                }
             })
-        },
-        computed: {
-            restored: function() {
-                return this.foo.$restore();
-            }
         },
         methods: {
             loadData: function() {
                 setTimeout(() => {
-                    // 建议在 service 层封装模型适配的逻辑
-                    this.foo.$adapt(this.source);
+                    this.source = {
+                        a: 'a',
+                        b: null,
+                        c: 'c'
+                    };
 
-                    // XXX 在视图中直接使用 {{foo.$restore()}}, 会造成 $restore 方法被无限循环调用
-                    // 因此请使用 computed 属性来调用 $restore 方法
+                    // 建议在 service 层封装模型适配的逻辑
+                    this.foo.$setSource(this.source);
+
                     this.foo = Object.assign({}, this.foo);
                 }, 1000);
             }

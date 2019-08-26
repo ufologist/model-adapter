@@ -10,24 +10,20 @@
     <script src="//cdn.bootcss.com/react-dom/16.8.6/umd/react-dom.development.js"></script>
     <script src="//cdn.bootcss.com/babel-standalone/6.15.0/babel.min.js"></script>
 
-    <script src="//raw.githack.com/ufologist/model-adapter/master/dist/model-adapter.js"></script>
+    <script src="../dist/model-adapter.js"></script>
     <script type="text/babel">
     class Hello extends React.Component {
         constructor(props) {
             super(props);
 
-            this.source = {
-                a: 'a',
+            this.source = null;
+
+            this.state = new ModelAdapter(null, {
                 b: {
                     bb: {
-                        bbb: 'bbb'
+                        bbb: 'default-bbb'
                     }
-                },
-                c: 'c'
-            };
-
-            this.state = new ModelAdapter({
-                bbb: 'b.bb.bbb'
+                }
             });
         }
 
@@ -42,7 +38,7 @@
 
                     <h2>model-adapter</h2>
                     {this.state.a && <p>a: {this.state.a}</p>}
-                    {this.state.bbb && <p>bbb: <input type="text" value={this.state.bbb} onChange={this.onChange.bind(this)} /></p>}
+                    {this.state.b.bb.bbb && <p>b.bb.bbb: <input type="text" value={this.state.b.bb.bbb} onChange={this.onChange.bind(this)} /></p>}
                     <div>state: <pre>{JSON.stringify(this.state, null, 2)}</pre></div>
 
                     <h2>restore</h2>
@@ -53,15 +49,25 @@
 
         loadData() {
             setTimeout(() => {
+                this.source = {
+                    a: 'a',
+                    b: null,
+                    c: 'c'
+                };
+
                 // 建议在 service 层封装模型适配的逻辑
-                this.state.$adapt(this.source);
+                this.state.$setSource(this.source);
                 this.setState(this.state);
             }, 1000);
         }
 
         onChange(event) {
             this.setState({
-                bbb: event.target.value
+                b: {
+                    bb: {
+                        bbb: event.target.value
+                    }
+                }
             });
         }
     }
