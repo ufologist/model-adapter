@@ -3,7 +3,7 @@ import ModelAdapter from '../src/model-adapter.js';
 describe('constructor', function() {
     test('不传参数', function() {
         var model = new ModelAdapter();
-        expect(Object.keys(model).length).toBe(0);
+        expect(Object.keys(model).length).toBe(4);
         expect(typeof model.$getSource).toBe('function');
         expect(typeof model.$setSource).toBe('function');
         expect(typeof model.$setAdapter).toBe('function');

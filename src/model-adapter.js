@@ -35,35 +35,31 @@ export default class ModelAdapter {
          * @param {string} propertyPath
          * @return {*}
          */
-        Object.defineProperty(this, '$getSource', {
-            value: function(propertyPath) {
-                if (propertyPath) {
-                    return dotProp.get(_source, propertyPath);
-                } else {
-                    return _source;
-                }
+        this.$getSource = function(propertyPath) {
+            if (propertyPath) {
+                return dotProp.get(_source, propertyPath);
+            } else {
+                return _source;
             }
-        });
+        };
 
         /**
          * @type {function} 设置源数据
          * @param {*} source
          */
-        Object.defineProperty(this, '$setSource', {
-            value: function(source) {
-                // 重置 this 上的属性, 仅保留方法, 确保 this 是一个"空"对象
-                for (var key in this) {
-                    if (typeof this[key] !== 'function') {
-                        delete this[key];
-                    }
+        this.$setSource = function(source) {
+            // 重置 this 上的属性, 仅保留方法, 确保 this 是一个"空"对象
+            for (var key in this) {
+                if (typeof this[key] !== 'function') {
+                    delete this[key];
                 }
-
-                _source = source;
-                register = {};
-                defaultsDeep(this, _source, defaults);
-                adapt(this, _propertyAdapter, register);
             }
-        });
+
+            _source = source;
+            register = {};
+            defaultsDeep(this, _source, defaults);
+            adapt(this, _propertyAdapter, register);
+        };
 
         /**
          * @type {function} 新增/更新/删除属性适配器. 当传入适配器为 null 时, 删除该适配器
@@ -71,33 +67,29 @@ export default class ModelAdapter {
          * @param {object} adapter
          * @param {function} adapter.transformer
          */
-        Object.defineProperty(this, '$setAdapter', {
-            value: function(propertyPath, adapter) {
-                if (adapter) {
-                    _propertyAdapter[propertyPath] = adapter;
-                } else {
-                    delete _propertyAdapter[propertyPath];
-                }
-
-                adapt(this, _propertyAdapter, register);
+        this.$setAdapter = function(propertyPath, adapter) {
+            if (adapter) {
+                _propertyAdapter[propertyPath] = adapter;
+            } else {
+                delete _propertyAdapter[propertyPath];
             }
-        });
+
+            adapt(this, _propertyAdapter, register);
+        };
 
         /**
          * @type {function} 还原数据
          * @param {string} propertyPath
          * @return {object}
          */
-        Object.defineProperty(this, '$restore', {
-            value: function(propertyPath) {
-                var restored = restore(this, _propertyAdapter, register);
-                if (propertyPath) {
-                    return dotProp.get(restored, propertyPath);
-                } else {
-                    return restored;
-                }
+        this.$restore = function(propertyPath) {
+            var restored = restore(this, _propertyAdapter, register);
+            if (propertyPath) {
+                return dotProp.get(restored, propertyPath);
+            } else {
+                return restored;
             }
-        });
+        };
 
         this.$setSource(source);
     }
