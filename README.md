@@ -117,11 +117,15 @@ console.log(model.extData.country.name); // 'China'
 import ModelAdapter from 'model-adapter';
 
 var ajaxData = {
-    date: 1565001521464
+    foo: {
+        bar: {
+            date: 1565001521464
+        }
+    }
 };
 
 var model = new ModelAdapter(ajaxData, null, {
-    date: {
+    'foo.bar.date': {
         transformer: function(value, source) { // 变形器负责格式化数据
             return new Date(value).toISOString();
         }
@@ -130,8 +134,8 @@ var model = new ModelAdapter(ajaxData, null, {
 
 var restored = model.$restore();
 
-console.log(model.date);    // '2019-08-05T10:38:41.464Z'
-console.log(restored.date); // 1565001521464
+console.log(model.foo.bar.date);    // '2019-08-05T10:38:41.464Z'
+console.log(restored.foo.bar.date); // 1565001521464
 ```
 
 ### 数组: 在 `transformer` 中适配数组元素的模型
