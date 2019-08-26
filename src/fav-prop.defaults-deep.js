@@ -4,8 +4,8 @@
 
 'use strict';
 
-var enumOwnProps = require('@fav/prop.enum-own-props');
-var isPlainObject = require('@fav/type.is-plain-object');
+import enumOwnProps from '@fav/prop.enum-own-props';
+import isPlainObject from '@fav/type.is-plain-object';
 
 function defaultsDeep(dest /* , ...src */) {
 //   if (!isPlainObject(dest)) {
