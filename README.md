@@ -45,84 +45,73 @@ var vm = {
 
 ## 核心思路
 
-建立一个新的模型, 通过适配器(Adapter)**映射**(`path get` 机制)源数据(模型)上的属性
+建立一个新的模型, 通过设置**默认值来补齐**源数据(模型)上可能缺少的对象嵌套层次. 这样我们就能够以访问源数据一致的方式来访问新模型上的数据.
 
-例如
-* 新模型的 `a` 属性映射源数据模型中的 `a` 属性, 即一对一的映射属性
+例如要访问源数据上的 `a.aa.aaa`, 如果源数据的 `a` 为 `null`, 那么我们直接访问肯定是会报错的.
 
-  `target.a = source.a`
-* 新模型的 `nb` 属性映射源数据模型中的 `b` 属性
-
-  `target.nb = source.b`
-* 新模型的 `ccc` 属性映射源数据模型中嵌套的 `ccc` 属性(通过 `c.cc.ccc` 属性的 `path` 路径)
-
-  `target.ccc = source.c.cc.ccc`
+因此我们可以准备一份默认数据, 来补齐源数据上可能缺失的数据.
+* 当源数据上没有数据(`undefined` 或者 `null`)时, 模型返回默认数据上的数据
+* 当源数据上有数据时, 模型返回源数据上的数据
 
 ```
-新模型(target)            源数据模型(source)
-{                        {
-    a: 'a',        <─        a: 1,
-   nb: 'b',        <─        b: '2',
-  ccc: 'c.cc.ccc'  <─┐       c: {
-                     │           cc: {
-                     └─              ccc: 'ccc'
-                                 }
-                             }
-}                        }
+新模型(target)                       源数据(source)          默认值(default)
+{                                   {                       {
+    a: {                        <─       a: null,       <─      a: {
+        aa: {                                                       aa: {
+            aaa: 'default-aaa'                                            aaa: 'default-aaa'
+        }                                                           }
+    },                                                          },
+    b: 'source-b'               <─       b: 'source-b'          b: 'default-b',
+    c: 'default-c'              <─                      <─      c: 'default-c'
+}                                   }                       }
+```
+
+另外一种**映射**属性的实现思路可以参考[v0.0.1](https://github.com/ufologist/model-adapter/tree/v0.0.1)版本
+
+--------
+
+针对格式化数据的需求, 采取的思路为将属性改写为 `setter/getter`, 以输入和输出的概念来适配新模型上的属性
+* `setter` 做为输入(input), 以源数据上的值为标准来接收数据
+  * 例如源数据返回的字段值为时间戳, 那么我们设置属性值时, 始终设置为时间戳: `a.aa.aaa = 1566814067549`
+* `getter` 做为输出(output), 将源数据做转换后返回我们需要的格式
+  * 例如将时间戳格式化为日期字符串 `a.aa.aaa // 2019-08-26`
+
+```javascript
+// setter
+a.aa.aaa = 1566814067549 // 输入(input)
+// getter
+a.aa.aaa // 2019-08-26   // 输出(output)
 ```
 
 ## 示例
 
-### 嵌套数据: 打平数据结构, 映射 `path` 来访问
+### 嵌套数据/空数据: 用默认值来补齐(重点是补齐嵌套对象)
 
 ```javascript
 import ModelAdapter from 'model-adapter';
 
 // 这里示例由后端接口返回的数据
 var ajaxData = {
-    name: 'Sun',
+    name: null,
     age: 18,
+    extData: null
+};
+
+var model = new ModelAdapter(ajaxData, {
+    name: 'Guest',
     extData: {
         country: {
             name: 'China'
         }
     }
-};
+});
 
-var model = new ModelAdapter({          // name, age 属性默认一对一映射
-    countryName: 'extData.country.name' // 嵌套属性映射到源数据属性的 path 路径
-}, ajaxData);
-
-console.log(model.name);        // 'Sun'
-console.log(model.age);         // 18
-console.log(model.countryName); // 'China'
+console.log(model.name);                 // 'Guest'
+console.log(model.age);                  // 18
+console.log(model.extData.country.name); // 'China'
 ```
 
-### 空数据: 设置默认值
-
-```javascript
-import ModelAdapter from 'model-adapter';
-
-var ajaxData = {
-    name: null,
-    age: 18
-};
-
-var model = new ModelAdapter({
-    name: { // null 的属性值
-        defaultValue: 'Guest'
-    },
-    sex: { // undefined 的属性值
-        defaultValue: 'man'
-    }
-}, ajaxData);
-
-console.log(model.name); // 'Guest'
-console.log(model.age);  // 18
-console.log(model.sex);  // 'man'
-```
-
-### 格式化数据: 变形和还原
+### 格式化数据: 变形
 
 ```javascript
 import ModelAdapter from 'model-adapter';
@@ -131,16 +120,13 @@ var ajaxData = {
     date: 1565001521464
 };
 
-var model = new ModelAdapter({
+var model = new ModelAdapter(ajaxData, null, {
     date: {
         transformer: function(value, source) { // 变形器负责格式化数据
             return new Date(value).toISOString();
-        },
-        restorer: function(value, model) {     // 还原器负责还原回去
-            return new Date(value).getTime();
         }
     }
-}, ajaxData);
+});
 
 var restored = model.$restore();
 
@@ -155,115 +141,106 @@ import ModelAdapter from 'model-adapter';
 
 var ajaxData = {
     users: [{
-        name: 'Sun',
+        name: null,
         age: 18,
-        extData: {
-            country: {
-                name: 'China'
-            }
-        }
+        extData: null
     }, {
         name: 'Shine',
         age: 19,
         extData: {
             country: {
-                name: 'China'
+                name: 'USA'
             }
         }
     }]
 };
 
-var model = new ModelAdapter({
+var model = new ModelAdapter(ajaxData, null, {
     users: {
         transformer: function(value) {
             return value.map(function(item) {
-                return new ModelAdapter({
-                    countryName: 'extData.country.name'
-                }, item);
+                return new ModelAdapter(item, {
+                    name: 'Sun',
+                    extData: {
+                        country: {
+                            name: 'China'
+                        }
+                    }
+                });
             });
         }
     }
-}, ajaxData);
-
-console.log(model.users[0].name);        // 'Sun'
-console.log(model.users[0].age);         // 18
-console.log(model.users[0].countryName); // 'China'
-```
-
-### 验证数据: 验证器(仅输出日志提示)
-
-```javascript
-import ModelAdapter from 'model-adapter';
-
-var ajaxData = {
-    age: '18'
-};
-
-var model = new ModelAdapter({
-    age: {
-        validator: 'number'
-    }
-}, ajaxData);
-
-console.log(model.age); // '18'
-```
-
-### 先声明模型再适配数据
-
-```javascript
-import ModelAdapter from 'model-adapter';
-
-// 声明模型
-var model = new ModelAdapter({
-    countryName: 'extData.country.name'
 });
 
-var ajaxData = {
-    name: 'Sun',
-    age: 18,
+console.log(model.users[0].name);                 // 'Sun'
+console.log(model.users[0].age);                  // 18
+console.log(model.users[0].extData.country.name); // 'China'
+
+console.log(model.users[1].name);                 // 'Shine'
+console.log(model.users[1].age);                  // 19
+console.log(model.users[1].extData.country.name); // 'USA'
+```
+
+### 先声明模型再设置源数据
+
+```javascript
+import ModelAdapter from 'model-adapter';
+
+// 声明模型(预先定义好 defaults 和 propertyAdapter)
+var model = new ModelAdapter(null, {
+    name: 'Guest',
     extData: {
         country: {
             name: 'China'
         }
     }
-};
-// 适配数据
-model.$adapt(ajaxData);
+});
 
-console.log(model.name);        // 'Sun'
-console.log(model.age);         // 18
-console.log(model.countryName); // 'China'
+var ajaxData = {
+    name: null,
+    age: 18,
+    extData: null
+};
+// 设置源数据
+model.$setSource(ajaxData);
+
+console.log(model.name);                 // 'Guest'
+console.log(model.age);                  // 18
+console.log(model.extData.country.name); // 'China'
 ```
 
-### 声明模型类(推荐关闭 `copy` 机制)
+### 声明模型类
 
 ```javascript
 import ModelAdapter from 'model-adapter';
 
+// 声明模型类(预先定义好 defaults 和 propertyAdapter)
 class User extends ModelAdapter {
     constructor(source) {
-        super({
-            name: 'name',
-            countryName: 'extData.country.name'
-        }, source, false);
+        super(source, {
+            name: 'Guest',
+            extData: {
+                country: {
+                    name: 'China'
+                }
+            }
+        });
     }
 }
 
 var ajaxData = {
-    name: 'Sun',
+    name: null,
     age: 18,
-    extData: {
-        country: {
-            name: 'China'
-        }
-    }
+    extData: null
 };
 
+// 使用模型类时, 只需要设置源数据
 var user = new User(ajaxData);
 
-console.log(user);             // <User>
-console.log(user.name);        // 'Sun'
-console.log(user.countryName); // 'China'
+console.log(user);                      // <User>
+console.log(user.name);                 // 'Guest'
+console.log(user.age);                  // 18
+console.log(user.extData.country.name); // 'China'
 ```
 
 ### 与其他框架集成
@@ -282,9 +259,14 @@ console.log(user.countryName); // 'China'
 // service/user.js
 export function getUser() {
     return axios('/user').then(function(response) {
-        return new ModelAdapter({
-            countryName: 'extData.country.name'
-        }, response.data);
+        return new ModelAdapter(response.data, {
+            name: 'Guest',
+            extData: {
+                country: {
+                    name: 'China'
+                }
+            }
+        });
     });
 }
 ```
@@ -294,77 +276,43 @@ export function getUser() {
 * 构造函数
 
   ```javascript
-  var model = new ModelAdapter(propertyAdapter, source, copy);
+  var model = new ModelAdapter(source, defaults, propertyAdapter);
   ```
 
+  * `source`: 源数据
+  * `defaults`: 源数据的默认值
   * `propertyAdapter`: 属性适配器
 
     结构为
     ```javascript
     {
-        name1: <adapter>,
-        name2: <adapter>,
+        propertyPath1: <adapter>,
+        propertyPath2: <adapter>,
         ...
     }
     ```
 
-    * **属性名**为新模型的属性名
-    * **属性值**用于配置适配器, 支持的配置方式详见 [API文档](https://doc.esdoc.org/github.com/ufologist/  model-adapter/class/src/model-adapter.js~ModelAdapter.html)
-  * `source`: 源数据
-  * `copy`: 是否自动一对一映射源数据上的属性
-  
-    注意: 开启和关闭 `copy` 参数的区别
-    * 开启 `copy`: 适配数据时会自动将 `source` 上面的所有属性一对一映射一遍(为这些属性创建 `propertyAdapter`), 再追加 `propertyAdapter` 参数显式声明的属性
-
-      例如
-      ```javascript
-      var model = new ModelAdapter({
-          countryName: 'extData.country.name'
-      }, {
-          name: 'Sun',
-          age: 18,
-          extData: {
-              country: {
-                  name: 'China'
-              }
-          }
-      });
-
-      // copy 来的属性
-      console.log(model.name);
-      console.log(model.age);
-      console.log(model.extData);
-      // 显式声明的属性
-      console.log(model.countryName);
-      ```
-    * 关闭 `copy`: 适配数据时只会有 `propertyAdapter` 显式声明的属性
-
-      例如
-      ```javascript
-      var model = new ModelAdapter({
-          countryName: 'extData.country.name'
-      }, {
-          name: 'Sun',
-          age: 18,
-          extData: {
-              country: {
-                  name: 'China'
-              }
-          }
-      }, false);
-
-      // 只有显式声明的属性
-      console.log(model.countryName);
-      ```
-* 适配数据
+    * **属性名**为新模型的属性名, 用于指定要适配的属性的 path 路径
+    * **属性值**用于配置适配器, 支持的配置方式详见 [API文档](https://doc.esdoc.org/github.com/ufologist/model-adapter/class/src/model-adapter.js~ModelAdapter.html)
+* 设置源数据
 
   ```javascript
-  model.$adapt(source);
+  model.$setSource(source);
   ```
-* 还原数据
+* 获取源数据(支持通过 `propertyPath` 参数安全地获取源数据)
 
   ```javascript
-  var source = model.$restore();
+  var source = model.$getSource(propertyPath);
+  ```
+* 新增/更新/删除属性适配器(当传入的适配器为 `null` 时, 删除该适配器)
+
+  ```javascript
+  model.$setAdapter(propertyPath, adapter);
+  ```
+* 还原数据(支持通过 `propertyPath` 参数安全地获取还原的数据)
+
+  ```javascript
+  var restored = model.$restore(propertyPath);
   ```
 
 ## 参考

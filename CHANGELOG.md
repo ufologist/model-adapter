@@ -1,6 +1,6 @@
 # CHANGELOG
 
-* v0.0.2 2019-8-24
+* v0.0.2 2019-8-26
 
   ## 如何选择一个合适的 `deep copy default` 库
   * 需求
@@ -10,10 +10,10 @@
     ```
     结果                         源数据                   默认值
     {                            {                       {
-        a: 'default-a',              a: null,                a: 'default-a',
+        a: 'default-a',       <─     a: null,         <─     a: 'default-a',
         b: {                         b: {                    b: {
-            bb: 'source',     <─         bb: 'source' <─         bb: 'default-bb',
-           bb1: 'default-bb1'                                   bb1: 'default-bb1'
+            bb: 'source',     <─         bb: 'source'            bb: 'default-bb',
+           bb1: 'default-bb1' <─                      <─        bb1: 'default-bb1'
         }                            }                       }
     }                            }                       }
     ```
