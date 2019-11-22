@@ -24,7 +24,8 @@ export default [{
         babelPlugin,
         uglify()
     ]
-}, {
+}/* 由于依赖的库用到了 ES2015 的语法, 如果直接使用, 会有兼容性问题, 因此暂时不使用
+,{
     input: input,
     output: {
         file: 'dist/model-adapter.common.js',
@@ -42,4 +43,4 @@ export default [{
     plugins: [
         babelPlugin
     ]
-}];
+}*/];
